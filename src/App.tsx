@@ -41,7 +41,7 @@ function App() {
             </PrivateRoute>
           }
         />
-        <Route path="/" element={<Navigate to="/plants" />} />
+        <Route path="/" element={<Navigate to="/plots" />} />
       </Routes>
     </BrowserRouter>
   )

@@ -14,7 +14,7 @@ export const LoginPage = () => {
     mutationFn: login,
     onSuccess: (data) => {
       saveToken(data.token)
-      navigate('/plants')
+      navigate('/plots')
     },
   })
 
