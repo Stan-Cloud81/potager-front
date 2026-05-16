@@ -17,6 +17,7 @@ type GardenPlotVisualProps = {
   plantings: Planting[]
   plants: Plant[]
   onOverlapChange?: (hasOverlap: boolean) => void
+  onPlantingStatusChange?: (plantingId: string, status: 'planted') => void
 }
 
 type DraggablePlant = {
@@ -38,7 +39,7 @@ type SizeFactor = {
 const MAX_HEIGHT = 600
 const EDIT_CELL_SIZE = 60
 
-export const GardenPlotVisual = ({ plotWidth, plotLength, plantings, plants, onOverlapChange }: GardenPlotVisualProps) => {
+export const GardenPlotVisual = ({ plotWidth, plotLength, plantings, plants, onOverlapChange, onPlantingStatusChange }: GardenPlotVisualProps) => {
   const [windowWidth, setWindowWidth] = useState(typeof window !== 'undefined' ? window.innerWidth : 1024)
   const [windowHeight, setWindowHeight] = useState(typeof window !== 'undefined' ? window.innerHeight : 768)
 
@@ -182,10 +183,14 @@ export const GardenPlotVisual = ({ plotWidth, plotLength, plantings, plants, onO
   const [resizingPlant, setResizingPlant] = useState<string | null>(null)
   const [resizeStart, setResizeStart] = useState<{ mouseX: number; mouseY: number; widthFactor: number; lengthFactor: number; baseWidth: number; baseHeight: number; gridCols: number; gridRows: number; corner: 'nw' | 'ne' | 'sw' | 'se'; initialX: number; initialY: number; initialWidth: number; initialHeight: number } | null>(null)
   const [hoveredPlant, setHoveredPlant] = useState<string | null>(null)
+  const [draggedFromSidebar, setDraggedFromSidebar] = useState<string | null>(null)
   const containerRef = useRef<HTMLDivElement>(null)
   const editContainerRef = useRef<HTMLDivElement>(null)
 
-  const draggablePlants: DraggablePlant[] = plantings.map(planting => {
+  const plannedPlantings = plantings.filter(p => p.status === 'planned')
+  const nonPlannedPlantings = plantings.filter(p => p.status !== 'planned')
+
+  const draggablePlants: DraggablePlant[] = nonPlannedPlantings.map(planting => {
     const plant = plants.find(p => p.id === planting.plant_id)!
     const position = positions.find(pos => pos.planting_id === planting.id) || { planting_id: planting.id, x: 0, y: 0 }
     return { planting, plant, position }
@@ -331,6 +336,11 @@ export const GardenPlotVisual = ({ plotWidth, plotLength, plantings, plants, onO
 
     try {
       for (const position of positions) {
+        const planting = plantings.find(p => p.id === position.planting_id)
+        if (planting?.status === 'planned' && onPlantingStatusChange) {
+          onPlantingStatusChange(position.planting_id, 'planted')
+        }
+
         const gridPos = gridPositions.get(position.planting_id)
         const individualPositions = gridPos?.map(pos => ({
           x: pos.col,
@@ -582,6 +592,38 @@ export const GardenPlotVisual = ({ plotWidth, plotLength, plantings, plants, onO
     onOverlapChange(anyOverlap)
   }
 
+  const handleSidebarDragStart = (e: React.DragEvent, plantingId: string) => {
+    setDraggedFromSidebar(plantingId)
+    e.dataTransfer.effectAllowed = 'move'
+  }
+
+  const handlePlotDragOver = (e: React.DragEvent) => {
+    if (draggedFromSidebar) {
+      e.preventDefault()
+      e.dataTransfer.dropEffect = 'move'
+    }
+  }
+
+  const handlePlotDrop = (e: React.DragEvent) => {
+    if (!draggedFromSidebar || !containerRef.current) return
+    e.preventDefault()
+
+    const rect = containerRef.current.getBoundingClientRect()
+    const x = Math.round((e.clientX - rect.left) / scale / 5) * 5
+    const y = Math.round((e.clientY - rect.top) / scale / 5) * 5
+
+    setPositions(prev => {
+      const existing = prev.find(p => p.planting_id === draggedFromSidebar)
+      if (existing) {
+        return prev.map(p => p.planting_id === draggedFromSidebar ? { ...p, x, y } : p)
+      } else {
+        return [...prev, { planting_id: draggedFromSidebar, x, y }]
+      }
+    })
+
+    setDraggedFromSidebar(null)
+  }
+
   return (
     <div className="space-y-4 select-none">
       <div className="flex justify-end">
@@ -597,6 +639,7 @@ export const GardenPlotVisual = ({ plotWidth, plotLength, plantings, plants, onO
         <div className="mb-2 text-sm text-gray-600">
           Plot dimensions: {plotWidth}cm × {plotLength}cm{isRotated && ' (rotated for display)'}
         </div>
+        <div className="flex gap-4">
         <div className="relative inline-block">
           <div style={{ 
             position: 'relative',
@@ -672,6 +715,8 @@ export const GardenPlotVisual = ({ plotWidth, plotLength, plantings, plants, onO
             onMouseMove={handleMouseMove}
             onMouseUp={handleMouseUp}
             onMouseLeave={handleMouseUp}
+            onDragOver={handlePlotDragOver}
+            onDrop={handlePlotDrop}
           >
           {draggablePlants.map(dp => {
             if (editingPlantingId === dp.planting.id) return null
@@ -977,6 +1022,55 @@ export const GardenPlotVisual = ({ plotWidth, plotLength, plantings, plants, onO
           })}
           </div>
           </div>
+        </div>
+
+        {plannedPlantings.length > 0 && (
+          <div 
+            className="bg-gray-50 border-2 border-gray-300 rounded-lg p-3 overflow-y-auto flex-shrink-0"
+            style={{ 
+              width: '280px',
+              maxHeight: `${visualHeight + 28}px`
+            }}
+          >
+            <h3 className="text-sm font-bold text-gray-700 mb-3 sticky top-0 bg-gray-50 pb-2">
+              Planned Plants ({plannedPlantings.length})
+            </h3>
+            <div className="space-y-2">
+              {plannedPlantings.map(planting => {
+                const plant = plants.find(p => p.id === planting.plant_id)
+                if (!plant) return null
+
+                return (
+                  <div
+                    key={planting.id}
+                    draggable
+                    onDragStart={(e) => handleSidebarDragStart(e, planting.id)}
+                    className="bg-white border border-gray-300 rounded-lg p-2 cursor-move hover:shadow-md hover:border-green-400 transition-all"
+                  >
+                    <div className="flex items-center gap-2">
+                      <PlantImage
+                        plantId={plant.id}
+                        alt={plant.name}
+                        className="w-12 h-12 object-contain rounded flex-shrink-0"
+                      />
+                      <div className="flex-1 min-w-0">
+                        <div className="font-semibold text-sm text-gray-900 truncate">
+                          {plant.name}
+                        </div>
+                        <div className="text-xs text-gray-600 truncate">
+                          {plant.variety}
+                        </div>
+                        <div className="text-xs text-gray-500">
+                          Qty: {planting.quantity}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+        )}
         </div>
       </div>
 
