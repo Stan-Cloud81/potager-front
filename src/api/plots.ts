@@ -2,14 +2,14 @@ import { GardenPlot, CreateGardenPlotRequest } from "../types"
 import { apiRequest } from "./client"
 
 export const getPlots = async (filters?: {
-  name?: string
-  soil_type?: string
-  sunlight_exposure?: string
+  nom?: string
+  nature_du_sol?: string
+  exposition?: string
 }): Promise<GardenPlot[]> => {
   const params = new URLSearchParams()
-  if (filters?.name) params.append("name", filters.name)
-  if (filters?.soil_type) params.append("soil_type", filters.soil_type)
-  if (filters?.sunlight_exposure) params.append("sunlight_exposure", filters.sunlight_exposure)
+  if (filters?.nom) params.append("nom", filters.nom)
+  if (filters?.nature_du_sol) params.append("nature_du_sol", filters.nature_du_sol)
+  if (filters?.exposition) params.append("exposition", filters.exposition)
   
   const query = params.toString()
   return apiRequest<GardenPlot[]>(`/plots${query ? `?${query}` : ""}`)

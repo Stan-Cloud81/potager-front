@@ -166,10 +166,10 @@ export const GardenPlotDetailPage = () => {
           </button>
           <div className="flex justify-between items-start">
             <div>
-              <h1 className="text-3xl font-bold text-gray-900">{plot.name}</h1>
+              <h1 className="text-3xl font-bold text-gray-900">{plot.nom}</h1>
               <p className="text-gray-600 mt-1">
-                {plot.width}m × {plot.length}m ({(plot.width * plot.length).toFixed(1)} m²) • 
-                {' '}{plot.soil_type} soil • {plot.sunlight_exposure} sun
+                {(plot.largeur / 100).toFixed(2)}m × {(plot.longueur / 100).toFixed(2)}m ({((plot.largeur / 100) * (plot.longueur / 100)).toFixed(2)} m²) • 
+                {' '}{plot.nature_du_sol} • {plot.exposition}
               </p>
             </div>
           </div>
@@ -187,8 +187,8 @@ export const GardenPlotDetailPage = () => {
             </div>
             <GardenPlotVisual
               plotId={plot.id}
-              plotWidth={plot.width * 100}
-              plotLength={plot.length * 100}
+              largeur={plot.largeur}
+              longueur={plot.longueur}
               plantings={activePlantings}
               plants={plantQueries.data}
               onOverlapChange={setHasOverlap}
@@ -496,7 +496,7 @@ export const GardenPlotDetailPage = () => {
             <div className="bg-white rounded-lg shadow-xl max-w-md w-full max-h-[90vh] overflow-y-auto">
               <div className="p-6">
                 <div className="flex justify-between items-center mb-4">
-                  <h2 className="text-2xl font-bold text-gray-900">Add Plant to {plot.name}</h2>
+                  <h2 className="text-2xl font-bold text-gray-900">Add Plant to {plot.nom}</h2>
                   <button
                     onClick={() => setShowForm(false)}
                     className="text-gray-400 hover:text-gray-600 text-2xl"

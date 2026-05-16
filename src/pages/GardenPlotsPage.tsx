@@ -11,11 +11,11 @@ export const GardenPlotsPage = () => {
   const navigate = useNavigate()
   const [showForm, setShowForm] = useState(false)
   const [formData, setFormData] = useState<CreateGardenPlotRequest>({
-    name: '',
-    width: 0,
-    length: 0,
-    soil_type: 'loamy',
-    sunlight_exposure: 'full',
+    nom: '',
+    largeur: 0,
+    longueur: 0,
+    nature_du_sol: 'terreau',
+    exposition: 'plein soleil',
   })
 
   const queryClient = useQueryClient()
@@ -41,11 +41,11 @@ export const GardenPlotsPage = () => {
       queryClient.invalidateQueries({ queryKey: ['plots'] })
       setShowForm(false)
       setFormData({
-        name: '',
-        width: 0,
-        length: 0,
-        soil_type: 'loamy',
-        sunlight_exposure: 'full',
+        nom: '',
+        largeur: 0,
+        longueur: 0,
+        nature_du_sol: 'terreau',
+        exposition: 'plein soleil',
       })
     },
   })
@@ -108,13 +108,13 @@ export const GardenPlotsPage = () => {
                 >
                   <div className="p-6">
                     <h3 className="text-2xl font-bold text-gray-900 mb-4">
-                      {plot.name}
+                      {plot.nom}
                     </h3>
                     <div className="space-y-3">
                       <div className="flex items-center justify-between bg-green-50 p-3 rounded-lg">
                         <span className="text-gray-700 font-medium">Area</span>
                         <span className="text-xl font-bold text-green-600">
-                          {(plot.width * plot.length).toFixed(1)} m²
+                          {((plot.largeur / 100) * (plot.longueur / 100)).toFixed(2)} m²
                         </span>
                       </div>
                       <div className="flex items-center justify-between bg-orange-50 p-3 rounded-lg">
@@ -168,8 +168,8 @@ export const GardenPlotsPage = () => {
                     <input
                       type="text"
                       required
-                      value={formData.name}
-                      onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                      value={formData.nom}
+                      onChange={(e) => setFormData({ ...formData, nom: e.target.value })}
                       className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-green-500 focus:border-green-500"
                       placeholder="e.g. Front Garden"
                     />
@@ -184,8 +184,8 @@ export const GardenPlotsPage = () => {
                         required
                         min="0.1"
                         step="0.1"
-                        value={formData.width || ''}
-                        onChange={(e) => setFormData({ ...formData, width: parseFloat(e.target.value) || 0 })}
+                        value={formData.largeur ? formData.largeur / 100 : ''}
+                        onChange={(e) => setFormData({ ...formData, largeur: (parseFloat(e.target.value) || 0) * 100})}
                         className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-green-500 focus:border-green-500"
                       />
                     </div>
@@ -198,8 +198,8 @@ export const GardenPlotsPage = () => {
                         required
                         min="0.1"
                         step="0.1"
-                        value={formData.length || ''}
-                        onChange={(e) => setFormData({ ...formData, length: parseFloat(e.target.value) || 0 })}
+                        value={formData.longueur ? formData.longueur / 100 : ''}
+                        onChange={(e) => setFormData({ ...formData, longueur: (parseFloat(e.target.value) || 0) * 100 })}
                         className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-green-500 focus:border-green-500"
                       />
                     </div>
@@ -209,13 +209,17 @@ export const GardenPlotsPage = () => {
                       Soil Type
                     </label>
                     <select
-                      value={formData.soil_type}
-                      onChange={(e) => setFormData({ ...formData, soil_type: e.target.value as 'clay' | 'sandy' | 'loamy' })}
+                      value={formData.nature_du_sol}
+                      onChange={(e) => setFormData({ ...formData, nature_du_sol: e.target.value as 'bruyère' | 'argileux' | 'terreau' | 'calcaire' | 'littoral' | 'caillouteux' | 'humifère' })}
                       className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-green-500 focus:border-green-500"
                     >
-                      <option value="clay">Clay</option>
-                      <option value="sandy">Sandy</option>
-                      <option value="loamy">Loamy</option>
+                      <option value="bruyère">Bruyère</option>
+                      <option value="argileux">Argileux</option>
+                      <option value="terreau">Terreau</option>
+                      <option value="calcaire">Calcaire</option>
+                      <option value="littoral">Littoral</option>
+                      <option value="caillouteux">Caillouteux</option>
+                      <option value="humifère">Humifère</option>
                     </select>
                   </div>
                   <div>
@@ -223,13 +227,14 @@ export const GardenPlotsPage = () => {
                       Sunlight Exposure
                     </label>
                     <select
-                      value={formData.sunlight_exposure}
-                      onChange={(e) => setFormData({ ...formData, sunlight_exposure: e.target.value as 'low' | 'partial' | 'full' })}
+                      value={formData.exposition}
+                      onChange={(e) => setFormData({ ...formData, exposition: e.target.value as 'plein soleil' | 'ensoleillée' | 'mi-ombre' | 'ombre' })}
                       className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-green-500 focus:border-green-500"
                     >
-                      <option value="low">Low</option>
-                      <option value="partial">Partial</option>
-                      <option value="full">Full</option>
+                      <option value="plein soleil">Plein soleil</option>
+                      <option value="ensoleillée">Ensoleillée</option>
+                      <option value="mi-ombre">Mi-ombre</option>
+                      <option value="ombre">Ombre</option>
                     </select>
                   </div>
                   {createMutation.isError && (

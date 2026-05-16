@@ -42,11 +42,11 @@ export type Plant = {
 
 export type GardenPlot = {
   id: string
-  name: string
-  width: number
-  length: number
-  soil_type: "clay" | "sandy" | "loamy"
-  sunlight_exposure: "low" | "partial" | "full"
+  nom: string
+  largeur: number
+  longueur: number
+  nature_du_sol: "bruyère" | "argileux" | "terreau" | "calcaire" | "littoral" | "caillouteux" | "humifère"
+  exposition: "plein soleil" | "ensoleillée" | "mi-ombre" | "ombre"
 }
 
 export type Planting = {

@@ -12,8 +12,8 @@ type PlantPosition = {
 
 type GardenPlotVisualProps = {
   plotId: string
-  plotWidth: number
-  plotLength: number
+  largeur: number
+  longueur: number
   plantings: Planting[]
   plants: Plant[]
   onOverlapChange?: (hasOverlap: boolean) => void
@@ -39,7 +39,7 @@ type SizeFactor = {
 const MAX_HEIGHT = 600
 const EDIT_CELL_SIZE = 60
 
-export const GardenPlotVisual = ({ plotWidth, plotLength, plantings, plants, onOverlapChange, onPlantingStatusChange }: GardenPlotVisualProps) => {
+export const GardenPlotVisual = ({ largeur, longueur, plantings, plants, onOverlapChange, onPlantingStatusChange }: GardenPlotVisualProps) => {
   const [windowWidth, setWindowWidth] = useState(typeof window !== 'undefined' ? window.innerWidth : 1024)
   const [windowHeight, setWindowHeight] = useState(typeof window !== 'undefined' ? window.innerHeight : 768)
 
@@ -56,10 +56,10 @@ export const GardenPlotVisual = ({ plotWidth, plotLength, plantings, plants, onO
   }, [])
 
   const isPortrait = windowWidth < windowHeight
-  const shouldRotate = isPortrait ? plotWidth > plotLength : plotLength > plotWidth
+  const shouldRotate = isPortrait ? largeur > longueur : longueur > largeur
   const isRotated = shouldRotate
-  const displayWidth = isRotated ? plotLength : plotWidth
-  const displayHeight = isRotated ? plotWidth : plotLength
+  const displayWidth = isRotated ? longueur : largeur
+  const displayHeight = isRotated ? largeur : longueur
 
   const maxVisualHeight = isPortrait ? windowHeight * 0.6 : MAX_HEIGHT
   const maxVisualWidth = Math.min(windowWidth * 0.85, 1200)
@@ -206,8 +206,10 @@ export const GardenPlotVisual = ({ plotWidth, plotLength, plantings, plants, onO
 
   const getPlantRect = (dp: DraggablePlant) => {
     const factors = sizeFactors.get(dp.planting.id) || { width_factor: 1, length_factor: 1 }
-    const baseWidth = (isRotated ? dp.plant.spacing_between_rows : dp.plant.spacing_between_plants) * factors.width_factor
-    const baseHeight = (isRotated ? dp.plant.spacing_between_plants : dp.plant.spacing_between_rows) * factors.length_factor
+    const plantSpacingBetweenPlants = dp.plant.spacing_between_plants ?? 30
+    const plantSpacingBetweenRows = dp.plant.spacing_between_rows ?? 40
+    const baseWidth = (isRotated ? plantSpacingBetweenRows : plantSpacingBetweenPlants) * factors.width_factor
+    const baseHeight = (isRotated ? plantSpacingBetweenPlants : plantSpacingBetweenRows) * factors.length_factor
 
     const gridPos = gridPositions.get(dp.planting.id)
     if (gridPos && gridPos.length > 0) {
@@ -246,8 +248,10 @@ export const GardenPlotVisual = ({ plotWidth, plotLength, plantings, plants, onO
     if (!currentPlant) return false
 
     const currentFactors = sizeFactors.get(plantingId) || { width_factor: 1, length_factor: 1 }
-    const baseWidth = (isRotated ? currentPlant.plant.spacing_between_rows : currentPlant.plant.spacing_between_plants) * currentFactors.width_factor
-    const baseHeight = (isRotated ? currentPlant.plant.spacing_between_plants : currentPlant.plant.spacing_between_rows) * currentFactors.length_factor
+    const currentPlantSpacingBetweenPlants = currentPlant.plant.spacing_between_plants ?? 30
+    const currentPlantSpacingBetweenRows = currentPlant.plant.spacing_between_rows ?? 40
+    const baseWidth = (isRotated ? currentPlantSpacingBetweenRows : currentPlantSpacingBetweenPlants) * currentFactors.width_factor
+    const baseHeight = (isRotated ? currentPlantSpacingBetweenPlants : currentPlantSpacingBetweenRows) * currentFactors.length_factor
     const currentGridPos = gridPositions.get(plantingId)
 
     if (currentGridPos && currentGridPos.length > 0) {
@@ -265,8 +269,10 @@ export const GardenPlotVisual = ({ plotWidth, plotLength, plantings, plants, onO
         if (dp.planting.id === plantingId) return false
 
         const otherFactors = sizeFactors.get(dp.planting.id) || { width_factor: 1, length_factor: 1 }
-        const otherBaseWidth = (isRotated ? dp.plant.spacing_between_rows : dp.plant.spacing_between_plants) * otherFactors.width_factor
-        const otherBaseHeight = (isRotated ? dp.plant.spacing_between_plants : dp.plant.spacing_between_rows) * otherFactors.length_factor
+        const otherPlantSpacingBetweenPlants = dp.plant.spacing_between_plants ?? 30
+        const otherPlantSpacingBetweenRows = dp.plant.spacing_between_rows ?? 40
+        const otherBaseWidth = (isRotated ? otherPlantSpacingBetweenRows : otherPlantSpacingBetweenPlants) * otherFactors.width_factor
+        const otherBaseHeight = (isRotated ? otherPlantSpacingBetweenPlants : otherPlantSpacingBetweenRows) * otherFactors.length_factor
         const otherGridPos = gridPositions.get(dp.planting.id)
 
         if (otherGridPos && otherGridPos.length > 0) {
@@ -295,8 +301,10 @@ export const GardenPlotVisual = ({ plotWidth, plotLength, plantings, plants, onO
         if (dp.planting.id === plantingId) return false
 
         const otherFactors = sizeFactors.get(dp.planting.id) || { width_factor: 1, length_factor: 1 }
-        const otherBaseWidth = (isRotated ? dp.plant.spacing_between_rows : dp.plant.spacing_between_plants) * otherFactors.width_factor
-        const otherBaseHeight = (isRotated ? dp.plant.spacing_between_plants : dp.plant.spacing_between_rows) * otherFactors.length_factor
+        const otherPlantSpacingBetweenPlants = dp.plant.spacing_between_plants ?? 30
+        const otherPlantSpacingBetweenRows = dp.plant.spacing_between_rows ?? 40
+        const otherBaseWidth = (isRotated ? otherPlantSpacingBetweenRows : otherPlantSpacingBetweenPlants) * otherFactors.width_factor
+        const otherBaseHeight = (isRotated ? otherPlantSpacingBetweenPlants : otherPlantSpacingBetweenRows) * otherFactors.length_factor
         const otherGridPos = gridPositions.get(dp.planting.id)
 
         if (otherGridPos && otherGridPos.length > 0) {
@@ -413,8 +421,10 @@ export const GardenPlotVisual = ({ plotWidth, plotLength, plantings, plants, onO
     if (!dp) return
 
     const factors = sizeFactors.get(plantingId) || { width_factor: 1, length_factor: 1 }
-    const rawBaseWidth = isRotated ? dp.plant.spacing_between_rows : dp.plant.spacing_between_plants
-    const rawBaseHeight = isRotated ? dp.plant.spacing_between_plants : dp.plant.spacing_between_rows
+    const plantSpacingBetweenPlants = dp.plant.spacing_between_plants ?? 30
+    const plantSpacingBetweenRows = dp.plant.spacing_between_rows ?? 40
+    const rawBaseWidth = isRotated ? plantSpacingBetweenRows : plantSpacingBetweenPlants
+    const rawBaseHeight = isRotated ? plantSpacingBetweenPlants : plantSpacingBetweenRows
 
     const gridPos = gridPositions.get(plantingId)
     let gridCols = dp.planting.quantity
@@ -672,7 +682,7 @@ export const GardenPlotVisual = ({ plotWidth, plotLength, plantings, plants, onO
       </div>
       <div className="border border-gray-300 rounded-lg p-4 bg-white">
         <div className="mb-2 text-sm text-gray-600">
-          Plot dimensions: {plotWidth}cm × {plotLength}cm{isRotated && ' (rotated for display)'}
+          Plot dimensions: {largeur}cm × {longueur}cm{isRotated && ' (rotated for display)'}
         </div>
         <div className="flex gap-4">
         <div className="relative inline-block">
@@ -761,8 +771,10 @@ export const GardenPlotVisual = ({ plotWidth, plotLength, plantings, plants, onO
             const factors = sizeFactors.get(dp.planting.id) || { width_factor: 1, length_factor: 1 }
             const isUndersized = factors.width_factor < 1 || factors.length_factor < 1
             const isModified = factors.width_factor !== 1 || factors.length_factor !== 1
-            const baseWidth = (isRotated ? dp.plant.spacing_between_rows : dp.plant.spacing_between_plants) * factors.width_factor
-            const baseHeight = (isRotated ? dp.plant.spacing_between_plants : dp.plant.spacing_between_rows) * factors.length_factor
+            const plantSpacingBetweenPlants = dp.plant.spacing_between_plants ?? 30
+            const plantSpacingBetweenRows = dp.plant.spacing_between_rows ?? 40
+            const baseWidth = (isRotated ? plantSpacingBetweenRows : plantSpacingBetweenPlants) * factors.width_factor
+            const baseHeight = (isRotated ? plantSpacingBetweenPlants : plantSpacingBetweenRows) * factors.length_factor
             const gridPos = gridPositions.get(dp.planting.id)
 
             return (
