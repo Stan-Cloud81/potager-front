@@ -19,7 +19,7 @@ export type Plant = {
   nom_scientifique?: string
   plantes_associes?: string[]
   distance_par_plante?: number
-  distance_par_range?: number
+  distance_par_rangee?: number
   details?: PlantDetails
   name?: string
   type?: "vegetable" | "fruit"

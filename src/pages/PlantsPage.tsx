@@ -598,36 +598,95 @@ export const PlantsPage = () => {
                   <div className="space-y-2 text-sm">
                     <div className="flex justify-between">
                       <span className="text-gray-600">Type:</span>
-                      <span className="font-medium capitalize">{plant.type}</span>
+                      <span className="font-medium">{plant.categories?.join(', ') || plant.type || <span className="text-gray-400 italic">Not Set</span>}</span>
                     </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">Variety:</span>
-                      <span className="font-medium">{plant.variety}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">Harvest Time:</span>
-                      <span className="font-medium">{plant.days_to_maturity_text || `${plant.harvest_time_days} days`}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">Watering:</span>
-                      <span className="font-medium capitalize">{plant.watering_frequency}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">Sunlight:</span>
-                      <span className="font-medium capitalize">{plant.sunlight_requirement}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">Growing Method:</span>
-                      <span className="font-medium capitalize">{plant.growing_method || <span className="text-gray-400 italic">not set</span>}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">Spacing:</span>
-                      <span className="font-medium">{plant.spacing_between_plants}cm</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">Row Spacing:</span>
-                      <span className="font-medium">{plant.spacing_between_rows}cm</span>
-                    </div>
+                    {plant.details?.culture?.culture && (
+                      <div className="flex justify-between">
+                        <span className="text-gray-600">Culture:</span>
+                        <span className="font-medium">{Array.isArray(plant.details.culture.culture) ? (plant.details.culture.culture as string[]).join(', ') : plant.details.culture.culture}</span>
+                      </div>
+                    )}
+                    {(() => {
+                      const seedlingMonths = plant.details?.culture?.['periode_de_semis (sous_abri)'] as string[] | undefined;
+                      const harvestMonths = plant.details?.culture?.['periode_de_recolte'] as string[] | undefined;
+                      
+                      const monthMap: Record<string, number> = {
+                        'Janvier': 1, 'Février': 2, 'Mars': 3, 'Avril': 4, 'Mai': 5, 'Juin': 6,
+                        'Juillet': 7, 'Août': 8, 'Septembre': 9, 'Octobre': 10, 'Novembre': 11, 'Décembre': 12
+                      };
+                      
+                      if (seedlingMonths && seedlingMonths.length > 0 && harvestMonths && harvestMonths.length > 0) {
+                        const firstSeedlingMonth = monthMap[seedlingMonths[0]];
+                        const firstHarvestMonth = monthMap[harvestMonths[0]];
+                        
+                        if (firstSeedlingMonth && firstHarvestMonth) {
+                          const diff = firstHarvestMonth - firstSeedlingMonth;
+                          const days = diff * 30;
+                          
+                          return (
+                            <div className="flex justify-between">
+                              <span className="text-gray-600">Harvest Time:</span>
+                              <span className="font-medium">{days}</span>
+                            </div>
+                          );
+                        }
+                      }
+                      
+                      if (plant.harvest_time_days) {
+                        return (
+                          <div className="flex justify-between">
+                            <span className="text-gray-600">Harvest Time:</span>
+                            <span className="font-medium">{plant.days_to_maturity_text || `${plant.harvest_time_days} days`}</span>
+                          </div>
+                        );
+                      }
+                      
+                      return null;
+                    })()}
+                    {plant.details?.culture?.besoin_en_eau && (
+                      <div className="flex justify-between">
+                        <span className="text-gray-600">Besoin en eau:</span>
+                        <span className="font-medium capitalize">{plant.details.culture.besoin_en_eau as string}</span>
+                      </div>
+                    )}
+                    {plant.details?.culture?.exposition && (
+                      <div className="flex justify-between">
+                        <span className="text-gray-600">Exposition:</span>
+                        <span className="font-medium capitalize">{Array.isArray(plant.details.culture.exposition) ? (plant.details.culture.exposition as string[]).join(', ') : plant.details.culture.exposition}</span>
+                      </div>
+                    )}
+                    {plant.details?.culture?.nature_du_sol && (
+                      <div className="flex justify-between">
+                        <span className="text-gray-600">Nature du sol:</span>
+                        <span className="font-medium capitalize">{Array.isArray(plant.details.culture.nature_du_sol) ? (plant.details.culture.nature_du_sol as string[]).join(', ') : plant.details.culture.nature_du_sol}</span>
+                      </div>
+                    )}
+                    {plant.distance_par_plante ? (
+                      <div className="flex justify-between">
+                        <span className="text-gray-600">Distance par plante:</span>
+                        <span className="font-medium">{plant.distance_par_plante} cm</span>
+                      </div>
+                    ) : (
+                      plant.spacing_between_plants && (
+                        <div className="flex justify-between">
+                          <span className="text-gray-600">Distance par plante:</span>
+                          <span className="font-medium">{plant.spacing_between_plants} cm</span>
+                        </div>
+                      )
+                    )}
+                    {plant.distance_par_rangee ? (
+                      <div className="flex justify-between">
+                        <span className="text-gray-600">Distance par rangée:</span>
+                        <span className="font-medium">{plant.distance_par_rangee} cm</span>
+                      </div>
+                    ) : (
+                      plant.spacing_between_rows && (
+                        <div className="flex justify-between">
+                          <span className="text-gray-600">Distance par rangée:</span>
+                          <span className="font-medium">{plant.spacing_between_rows} cm</span>
+                        </div>
+                      )
+                    )}
                   </div>
                   <button
                     onClick={() => {
@@ -720,75 +779,63 @@ export const PlantsPage = () => {
                       <div className="text-sm font-semibold text-gray-600 uppercase mb-3">
                         Plant Information
                       </div>
-                      <div className="text-gray-900 space-y-3">
-                        <div>
-                          <span className="font-medium">🔬 Latin Name: </span>
-                          {plant.latin_name ? (
-                            <span className="italic">{plant.latin_name}</span>
-                          ) : (
-                            <span className="text-gray-400 italic">not set</span>
-                          )}
+                      <div className="text-gray-900 space-y-2 text-sm">
+                        <div className="flex justify-between">
+                          <span className="text-gray-600">Type:</span>
+                          <span className="font-medium">{plant.categories?.join(', ') || plant.type}</span>
                         </div>
-                        <div>
-                          <span className="font-medium">🏷️ Type: </span>
-                          <span className="capitalize">{plant.type}</span>
-                        </div>
-                        <div>
-                          <span className="font-medium">🌿 Variety: </span>
-                          {plant.variety}
-                        </div>
-                        <div>
-                          <span className="font-medium">🧬 Hybrid Status: </span>
-                          {plant.hybrid_status || <span className="text-gray-400 italic">not set</span>}
-                        </div>
-                        <div>
-                          <span className="font-medium">⏱️ Harvest Time: </span>
-                          {plant.days_to_maturity_text || `${plant.harvest_time_days} days`}
-                        </div>
-                        <div>
-                          <span className="font-medium">💧 Watering: </span>
-                          <span className="capitalize">{plant.watering_frequency}</span>
-                        </div>
-                        <div>
-                          <span className="font-medium">☀️ Sunlight: </span>
-                          <span className="capitalize">{plant.sunlight_requirement}</span>
-                        </div>
-                        <div>
-                          <span className="font-medium">🌱 Growing Method: </span>
-                          {plant.growing_method ? (
-                            <span className="capitalize">{plant.growing_method}</span>
-                          ) : (
-                            <span className="text-gray-400 italic">not set</span>
-                          )}
-                        </div>
-                        <div>
-                          <span className="font-medium">🌡️ Germination Temp: </span>
-                          {plant.germination_temperature || <span className="text-gray-400 italic">not set</span>}
-                        </div>
-                        <div>
-                          <span className="font-medium">🧪 Soil pH: </span>
-                          {plant.soil_ph || <span className="text-gray-400 italic">not set</span>}
-                        </div>
-                        <div>
-                          <span className="font-medium">📏 Plant Spacing: </span>
-                          {plant.spacing_between_plants}cm
-                        </div>
-                        <div>
-                          <span className="font-medium">📏 Row Spacing: </span>
-                          {plant.spacing_between_rows}cm
-                        </div>
+                        {plant.details?.culture?.culture && (
+                          <div className="flex justify-between">
+                            <span className="text-gray-600">Culture:</span>
+                            <span className="font-medium">{Array.isArray(plant.details.culture.culture) ? (plant.details.culture.culture as string[]).join(', ') : plant.details.culture.culture}</span>
+                          </div>
+                        )}
+                        {plant.details?.caracteristiques?.taille_des_plants_min && plant.details?.caracteristiques?.taille_des_plants_max && (
+                          <div className="flex justify-between">
+                            <span className="text-gray-600">Harvest Time:</span>
+                            <span className="font-medium">{plant.details.caracteristiques.taille_des_plants_min} - {plant.details.caracteristiques.taille_des_plants_max} cm</span>
+                          </div>
+                        )}
+                        {plant.details?.culture?.besoin_en_eau && (
+                          <div className="flex justify-between">
+                            <span className="text-gray-600">Besoin en eau:</span>
+                            <span className="font-medium capitalize">{plant.details.culture.besoin_en_eau as string}</span>
+                          </div>
+                        )}
+                        {plant.details?.culture?.exposition && (
+                          <div className="flex justify-between">
+                            <span className="text-gray-600">Exposition:</span>
+                            <span className="font-medium">{Array.isArray(plant.details.culture.exposition) ? (plant.details.culture.exposition as string[]).join(', ') : plant.details.culture.exposition}</span>
+                          </div>
+                        )}
+                        {plant.details?.culture?.nature_du_sol && (
+                          <div className="flex justify-between">
+                            <span className="text-gray-600">Nature du sol:</span>
+                            <span className="font-medium">{Array.isArray(plant.details.culture.nature_du_sol) ? (plant.details.culture.nature_du_sol as string[]).join(', ') : plant.details.culture.nature_du_sol}</span>
+                          </div>
+                        )}
+                        {plant.distance_par_plante && (
+                          <div className="flex justify-between">
+                            <span className="text-gray-600">Distance par plante:</span>
+                            <span className="font-medium">{plant.distance_par_plante} cm</span>
+                          </div>
+                        )}
+                        {plant.distance_par_rangee && (
+                          <div className="flex justify-between">
+                            <span className="text-gray-600">Distance par rangée:</span>
+                            <span className="font-medium">{plant.distance_par_rangee} cm</span>
+                          </div>
+                        )}
                       </div>
                     </div>
-                    {plant.details && plant.details.length > 0 && (
+                    {plant.details?.utilisation?.usage && (
                       <div className="border-b pb-4">
                         <div className="text-sm font-semibold text-gray-600 uppercase mb-3">
-                          Additional Details
+                          Usage
                         </div>
-                        <ul className="text-gray-900 space-y-2 list-disc list-inside">
-                          {plant.details.map((detail, idx) => (
-                            <li key={idx} className="text-sm">{detail}</li>
-                          ))}
-                        </ul>
+                        <div className="text-gray-900 text-sm">
+                          {plant.details.utilisation.usage as string}
+                        </div>
                       </div>
                     )}
                   </div>
