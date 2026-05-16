@@ -1,4 +1,4 @@
-import { Plant, CreatePlantRequest } from "../types"
+import { Plant, CreatePlantRequest, UpdatePlantRequest } from "../types"
 import { apiRequest } from "./client"
 
 export const getPlants = async (filters?: {
@@ -42,6 +42,13 @@ export const getPlantDetails = async (id: string): Promise<any> => {
 export const createPlant = async (data: CreatePlantRequest): Promise<Plant> => {
   return apiRequest<Plant>("/plants", {
     method: "POST",
+    body: JSON.stringify(data),
+  })
+}
+
+export const updatePlant = async (id: string, data: UpdatePlantRequest): Promise<Plant> => {
+  return apiRequest<Plant>(`/plants/${id}`, {
+    method: "PATCH",
     body: JSON.stringify(data),
   })
 }

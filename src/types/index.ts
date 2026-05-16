@@ -82,3 +82,23 @@ export type UpdatePlantingPositionRequest = {
   position_y: number
   individual_positions?: { x: number; y: number }[]
 }
+
+export type UpdatePlantRequest = {
+  name?: string
+  type?: "vegetable" | "fruit"
+  variety?: string
+  planting_months?: number[]
+  harvested_months?: number[]
+  harvest_time_days?: number
+  watering_frequency?: "low" | "medium" | "high"
+  sunlight_requirement?: "low" | "partial" | "full"
+  spacing_between_plants?: number
+  spacing_between_rows?: number
+  days_to_maturity_text?: string
+  germination_temperature?: string
+  growing_method?: string
+  hybrid_status?: string
+  image?: string
+  latin_name?: string
+  soil_ph?: string
+}

@@ -1,6 +1,6 @@
 import { useState, FormEvent } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { getPlants, getPlantDetails, createPlant } from '../api/plants'
+import { getPlants, getPlantDetails, createPlant, updatePlant } from '../api/plants'
 import { getPlots } from '../api/plots'
 import { createPlanting } from '../api/plantings'
 import { getMe } from '../api/auth'
@@ -17,6 +17,8 @@ export const PlantsPage = () => {
   const [selectedPlotId, setSelectedPlotId] = useState('')
   const [quantity, setQuantity] = useState(1)
   const [showCreatePlant, setShowCreatePlant] = useState(false)
+  const [showEditPlant, setShowEditPlant] = useState(false)
+  const [selectedPlantForEdit, setSelectedPlantForEdit] = useState<string | null>(null)
   const [searchQuery, setSearchQuery] = useState('')
   const [showFilters, setShowFilters] = useState(false)
   const [page, setPage] = useState(1)
@@ -111,6 +113,15 @@ export const PlantsPage = () => {
     },
   })
 
+  const updatePlantMutation = useMutation({
+    mutationFn: ({ id, data }: { id: string; data: any }) => updatePlant(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['plants'] })
+      setShowEditPlant(false)
+      setSelectedPlantForEdit(null)
+    },
+  })
+
   const handleAddToPlot = (e: FormEvent) => {
     e.preventDefault()
     if (!selectedPlantForPlot || !selectedPlotId) return
@@ -139,6 +150,71 @@ export const PlantsPage = () => {
       soil_ph: (formData.get('soil_ph') as string) || undefined,
     }
     createPlantMutation.mutate(data)
+  }
+
+  const handleEditPlant = (e: FormEvent) => {
+    e.preventDefault()
+    if (!selectedPlantForEdit) return
+    const originalPlant = plants?.find(p => p.id === selectedPlantForEdit)
+    if (!originalPlant) return
+
+    const formData = new FormData(e.target as HTMLFormElement)
+    const updates: any = {}
+
+    const name = formData.get('name') as string
+    if (name !== originalPlant.name) updates.name = name
+
+    const type = formData.get('type') as 'vegetable' | 'fruit'
+    if (type !== originalPlant.type) updates.type = type
+
+    const variety = formData.get('variety') as string
+    if (variety !== originalPlant.variety) updates.variety = variety
+
+    const planting_months = (formData.get('planting_months') as string).split(',').map(Number).filter(Boolean)
+    if (JSON.stringify(planting_months) !== JSON.stringify(originalPlant.planting_months)) updates.planting_months = planting_months
+
+    const harvested_months = (formData.get('harvested_months') as string).split(',').map(Number).filter(Boolean)
+    if (JSON.stringify(harvested_months) !== JSON.stringify(originalPlant.harvested_months)) updates.harvested_months = harvested_months
+
+    const harvest_time_days = parseInt(formData.get('harvest_time_days') as string)
+    if (harvest_time_days !== originalPlant.harvest_time_days) updates.harvest_time_days = harvest_time_days
+
+    const watering_frequency = formData.get('watering_frequency') as 'low' | 'medium' | 'high'
+    if (watering_frequency !== originalPlant.watering_frequency) updates.watering_frequency = watering_frequency
+
+    const sunlight_requirement = formData.get('sunlight_requirement') as 'low' | 'partial' | 'full'
+    if (sunlight_requirement !== originalPlant.sunlight_requirement) updates.sunlight_requirement = sunlight_requirement
+
+    const spacing_between_plants = parseInt(formData.get('spacing_between_plants') as string)
+    if (spacing_between_plants !== originalPlant.spacing_between_plants) updates.spacing_between_plants = spacing_between_plants
+
+    const spacing_between_rows = parseInt(formData.get('spacing_between_rows') as string)
+    if (spacing_between_rows !== originalPlant.spacing_between_rows) updates.spacing_between_rows = spacing_between_rows
+
+    const days_to_maturity_text = formData.get('days_to_maturity_text') as string
+    if (days_to_maturity_text !== (originalPlant.days_to_maturity_text || '')) updates.days_to_maturity_text = days_to_maturity_text || undefined
+
+    const germination_temperature = formData.get('germination_temperature') as string
+    if (germination_temperature !== (originalPlant.germination_temperature || '')) updates.germination_temperature = germination_temperature || undefined
+
+    const growing_method = formData.get('growing_method') as string
+    if (growing_method !== (originalPlant.growing_method || '')) updates.growing_method = growing_method || undefined
+
+    const hybrid_status = formData.get('hybrid_status') as string
+    if (hybrid_status !== (originalPlant.hybrid_status || '')) updates.hybrid_status = hybrid_status || undefined
+
+    const latin_name = formData.get('latin_name') as string
+    if (latin_name !== (originalPlant.latin_name || '')) updates.latin_name = latin_name || undefined
+
+    const soil_ph = formData.get('soil_ph') as string
+    if (soil_ph !== (originalPlant.soil_ph || '')) updates.soil_ph = soil_ph || undefined
+
+    if (Object.keys(updates).length > 0) {
+      updatePlantMutation.mutate({ id: selectedPlantForEdit, data: updates })
+    } else {
+      setShowEditPlant(false)
+      setSelectedPlantForEdit(null)
+    }
   }
 
   return (
@@ -476,18 +552,34 @@ export const PlantsPage = () => {
                     alt={plant.name}
                     className="w-full h-40 object-contain bg-gray-50"
                   />
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      setSelectedPlantForDetails(plant.id)
-                      setShowPlantDetails(true)
-                    }}
-                    className="absolute top-2 left-2 bg-white hover:bg-gray-100 text-gray-700 rounded-full p-2 shadow-md"
-                  >
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                  </button>
+                  <div className="absolute top-2 left-2 flex gap-2">
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        setSelectedPlantForDetails(plant.id)
+                        setShowPlantDetails(true)
+                      }}
+                      className="bg-white hover:bg-gray-100 text-gray-700 rounded-full p-2 shadow-md"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                    </button>
+                    {isAdmin && (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          setSelectedPlantForEdit(plant.id)
+                          setShowEditPlant(true)
+                        }}
+                        className="bg-yellow-400 hover:bg-yellow-500 text-white rounded-full p-2 shadow-md"
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                        </svg>
+                      </button>
+                    )}
+                  </div>
                 </div>
                 <div className="p-6">
                   <h3 className="text-xl font-semibold text-gray-900 mb-4 h-14 line-clamp-2">
@@ -1028,6 +1120,124 @@ export const PlantsPage = () => {
             </div>
           </div>
         )}
+
+        {showEditPlant && selectedPlantForEdit && (() => {
+          const plant = plants?.find(p => p.id === selectedPlantForEdit)
+          if (!plant) return null
+
+          return (
+            <div 
+              className="fixed inset-0 flex items-center justify-center p-4 z-50" 
+              style={{ background: 'rgba(0, 0, 0, 0.3)' }}
+            >
+              <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+                <div className="p-6">
+                  <div className="flex justify-between items-center mb-4">
+                    <h2 className="text-2xl font-bold text-gray-900">Edit Plant</h2>
+                    <button
+                      onClick={() => {
+                        setShowEditPlant(false)
+                        setSelectedPlantForEdit(null)
+                      }}
+                      className="text-gray-400 hover:text-gray-600 text-2xl"
+                    >
+                      ×
+                    </button>
+                  </div>
+                  <form onSubmit={handleEditPlant} className="space-y-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Name *</label>
+                        <input type="text" name="name" required defaultValue={plant.name} className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-green-500 focus:border-green-500" />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Type *</label>
+                        <select name="type" required defaultValue={plant.type} className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-green-500 focus:border-green-500">
+                          <option value="">Select type...</option>
+                          <option value="vegetable">Vegetable</option>
+                          <option value="fruit">Fruit</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Variety *</label>
+                        <input type="text" name="variety" required defaultValue={plant.variety} className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-green-500 focus:border-green-500" />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Latin Name</label>
+                        <input type="text" name="latin_name" defaultValue={plant.latin_name || ''} className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-green-500 focus:border-green-500" />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Planting Months * (comma-separated)</label>
+                        <input type="text" name="planting_months" required defaultValue={plant.planting_months.join(',')} placeholder="e.g., 3,4,5" className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-green-500 focus:border-green-500" />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Harvested Months * (comma-separated)</label>
+                        <input type="text" name="harvested_months" required defaultValue={plant.harvested_months.join(',')} placeholder="e.g., 7,8,9" className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-green-500 focus:border-green-500" />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Harvest Time (days) *</label>
+                        <input type="number" name="harvest_time_days" required min="1" defaultValue={plant.harvest_time_days} className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-green-500 focus:border-green-500" />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Days to Maturity Text</label>
+                        <input type="text" name="days_to_maturity_text" placeholder="e.g., 60-80 days" defaultValue={plant.days_to_maturity_text || ''} className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-green-500 focus:border-green-500" />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Watering Frequency *</label>
+                        <select name="watering_frequency" required defaultValue={plant.watering_frequency} className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-green-500 focus:border-green-500">
+                          <option value="">Select frequency...</option>
+                          <option value="low">Low</option>
+                          <option value="medium">Medium</option>
+                          <option value="high">High</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Sunlight Requirement *</label>
+                        <select name="sunlight_requirement" required defaultValue={plant.sunlight_requirement} className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-green-500 focus:border-green-500">
+                          <option value="">Select requirement...</option>
+                          <option value="low">Low</option>
+                          <option value="partial">Partial</option>
+                          <option value="full">Full</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Growing Method</label>
+                        <input type="text" name="growing_method" placeholder="e.g., direct seed, transplant" defaultValue={plant.growing_method || ''} className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-green-500 focus:border-green-500" />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Germination Temperature</label>
+                        <input type="text" name="germination_temperature" placeholder="e.g., 15-25°C" defaultValue={plant.germination_temperature || ''} className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-green-500 focus:border-green-500" />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Soil pH</label>
+                        <input type="text" name="soil_ph" placeholder="e.g., 6.0-7.0" defaultValue={plant.soil_ph || ''} className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-green-500 focus:border-green-500" />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Hybrid Status</label>
+                        <input type="text" name="hybrid_status" placeholder="e.g., F1 hybrid, heirloom" defaultValue={plant.hybrid_status || ''} className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-green-500 focus:border-green-500" />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Spacing Between Plants (cm) *</label>
+                        <input type="number" name="spacing_between_plants" required min="1" defaultValue={plant.spacing_between_plants} className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-green-500 focus:border-green-500" />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Spacing Between Rows (cm) *</label>
+                        <input type="number" name="spacing_between_rows" required min="1" defaultValue={plant.spacing_between_rows} className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-green-500 focus:border-green-500" />
+                      </div>
+                    </div>
+                    {updatePlantMutation.isError && (
+                      <div className="text-red-600 text-sm">{updatePlantMutation.error.message}</div>
+                    )}
+                    <div className="flex gap-3 pt-4">
+                      <button type="button" onClick={() => { setShowEditPlant(false); setSelectedPlantForEdit(null); }} className="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-800 px-4 py-2 rounded-md font-medium">Cancel</button>
+                      <button type="submit" disabled={updatePlantMutation.isPending} className="flex-1 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md font-medium disabled:opacity-50">{updatePlantMutation.isPending ? 'Updating...' : 'Update Plant'}</button>
+                    </div>
+                  </form>
+                </div>
+              </div>
+            </div>
+          )
+        })()}
       </div>
     </Layout>
   )
