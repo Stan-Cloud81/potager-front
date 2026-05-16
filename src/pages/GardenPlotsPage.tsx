@@ -81,7 +81,7 @@ export const GardenPlotsPage = () => {
 
   return (
     <Layout>
-      <div className="px-4 sm:px-0">
+      <div>
         <h1 className="text-3xl font-bold text-gray-900 mb-6">My Garden Plots</h1>
 
         {isLoading && (
@@ -97,7 +97,7 @@ export const GardenPlotsPage = () => {
         )}
 
         {!isLoading && !error && (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-6">
             {plots?.map((plot) => {
               const counts = getPlotCounts(plot.id)
               return (

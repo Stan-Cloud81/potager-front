@@ -63,7 +63,7 @@ export const PlantingsPage = () => {
 
   return (
     <Layout>
-      <div className="px-4 sm:px-0">
+      <div>
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-3xl font-bold text-gray-900">Plantings</h1>
           <button
@@ -149,7 +149,7 @@ export const PlantingsPage = () => {
         )}
 
         {plantings && plantings.length > 0 && (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-6">
             {plantings.map((planting) => (
               <div key={planting.id} className="bg-white shadow-md rounded-lg overflow-hidden">
                 <div className="p-6">
