@@ -617,10 +617,8 @@ export const GardenPlotVisual = ({ plotWidth, plotLength, plantings, plants, onO
     e.preventDefault()
     
     const plantingId = e.dataTransfer.getData('text/plain') || draggedFromSidebar
-    console.log('Drop event:', { plantingId, draggedFromSidebar, hasContainer: !!containerRef.current })
     
     if (!plantingId || !containerRef.current) {
-      console.log('Early return:', { plantingId, hasContainer: !!containerRef.current })
       setDraggedFromSidebar(null)
       return
     }
@@ -630,20 +628,16 @@ export const GardenPlotVisual = ({ plotWidth, plotLength, plantings, plants, onO
     const y = Math.round((e.clientY - rect.top) / scale / 5) * 5
 
     const planting = plantings.find(p => p.id === plantingId)
-    console.log('Found planting:', planting)
-    console.log('Position:', { x, y })
     
     setPositions(prev => {
       const existing = prev.find(p => p.planting_id === plantingId)
       const newPositions = existing 
         ? prev.map(p => p.planting_id === plantingId ? { ...p, x, y } : p)
         : [...prev, { planting_id: plantingId, x, y }]
-      console.log('New positions:', newPositions)
       return newPositions
     })
 
     if (planting && !sizeFactors.has(plantingId)) {
-      console.log('Setting size factors for', plantingId)
       setSizeFactors(prev => {
         const updated = new Map(prev)
         updated.set(plantingId, {
@@ -655,7 +649,6 @@ export const GardenPlotVisual = ({ plotWidth, plotLength, plantings, plants, onO
     }
 
     if (planting && !gridPositions.has(plantingId)) {
-      console.log('Setting grid positions for', plantingId)
       const initialGrid: GridPosition[] = []
       for (let i = 0; i < planting.quantity; i++) {
         initialGrid.push({ row: 0, col: i })
@@ -664,7 +657,6 @@ export const GardenPlotVisual = ({ plotWidth, plotLength, plantings, plants, onO
     }
 
     setDraggedFromSidebar(null)
-    console.log('Drop complete')
   }
 
   return (
