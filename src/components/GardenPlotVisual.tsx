@@ -187,10 +187,14 @@ export const GardenPlotVisual = ({ plotWidth, plotLength, plantings, plants, onO
   const containerRef = useRef<HTMLDivElement>(null)
   const editContainerRef = useRef<HTMLDivElement>(null)
 
-  const plannedPlantings = plantings.filter(p => p.status === 'planned')
-  const nonPlannedPlantings = plantings.filter(p => p.status !== 'planned')
+  const plantingsWithPositions = plantings.filter(p => 
+    positions.some(pos => pos.planting_id === p.id)
+  )
+  const plannedPlantings = plantings.filter(p => 
+    p.status === 'planned' && !positions.some(pos => pos.planting_id === p.id)
+  )
 
-  const draggablePlants: DraggablePlant[] = nonPlannedPlantings.map(planting => {
+  const draggablePlants: DraggablePlant[] = plantingsWithPositions.map(planting => {
     const plant = plants.find(p => p.id === planting.plant_id)!
     const position = positions.find(pos => pos.planting_id === planting.id) || { planting_id: planting.id, x: 0, y: 0 }
     return { planting, plant, position }
