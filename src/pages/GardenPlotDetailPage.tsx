@@ -162,6 +162,7 @@ export const GardenPlotDetailPage = () => {
               )}
             </div>
             <GardenPlotVisual
+              plotId={plot.id}
               plotWidth={plot.width * 100}
               plotLength={plot.length * 100}
               plantings={plotPlantings}

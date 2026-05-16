@@ -77,3 +77,8 @@ export type IndividualPlantPosition = {
   x: number
   y: number
 }
+
+export type UpdatePlantPositionsRequest = {
+  positions: PlantPosition[]
+  individual_positions?: IndividualPlantPosition[]
+}

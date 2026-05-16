@@ -1,7 +1,10 @@
 import { useState, useRef, useEffect } from 'react'
 import { Plant, Planting, PlantPosition, IndividualPlantPosition } from '../types'
+import { updatePlantPositions } from '../api/plantings'
+import { useMutation } from '@tanstack/react-query'
 
 type GardenPlotVisualProps = {
+  plotId: string
   plotWidth: number
   plotLength: number
   plantings: Planting[]
@@ -23,7 +26,7 @@ type GridPosition = {
 const MAX_HEIGHT = 600
 const EDIT_CELL_SIZE = 60
 
-export const GardenPlotVisual = ({ plotWidth, plotLength, plantings, plants, onOverlapChange }: GardenPlotVisualProps) => {
+export const GardenPlotVisual = ({ plotId, plotWidth, plotLength, plantings, plants, onOverlapChange }: GardenPlotVisualProps) => {
   const [windowWidth, setWindowWidth] = useState(typeof window !== 'undefined' ? window.innerWidth : 1024)
   const [windowHeight, setWindowHeight] = useState(typeof window !== 'undefined' ? window.innerHeight : 768)
 
@@ -53,8 +56,8 @@ export const GardenPlotVisual = ({ plotWidth, plotLength, plantings, plants, onO
   const [positions, setPositions] = useState<PlantPosition[]>(() => {
     return plantings.map((p, i) => ({
       planting_id: p.id,
-      x: 10 + (i % 3) * 30,
-      y: 10 + Math.floor(i / 3) * 30,
+      x: Math.round((10 + (i % 3) * 30) / 5) * 5,
+      y: Math.round((10 + Math.floor(i / 3) * 30) / 5) * 5,
     }))
   })
 
@@ -69,6 +72,12 @@ export const GardenPlotVisual = ({ plotWidth, plotLength, plantings, plants, onO
   }
 
   const [gridPositions, setGridPositions] = useState<Map<string, GridPosition[]>>(new Map())
+  const [isSaving, setIsSaving] = useState(false)
+
+  const savePositionsMutation = useMutation({
+    mutationFn: (data: { positions: PlantPosition[]; individual_positions?: IndividualPlantPosition[] }) =>
+      updatePlantPositions(plotId, data),
+  })
 
   const [editingPlantingId, setEditingPlantingId] = useState<string | null>(null)
   const [draggedPlant, setDraggedPlant] = useState<string | null>(null)
@@ -214,6 +223,29 @@ export const GardenPlotVisual = ({ plotWidth, plotLength, plantings, plants, onO
     setEditingPlantingId(null)
   }
 
+  const handleSavePositions = async () => {
+    setIsSaving(true)
+
+    const individualPositions: IndividualPlantPosition[] = []
+    gridPositions.forEach((gridPos, plantingId) => {
+      gridPos.forEach((pos, index) => {
+        individualPositions.push({
+          planting_id: plantingId,
+          index,
+          x: pos.col,
+          y: pos.row,
+        })
+      })
+    })
+
+    await savePositionsMutation.mutateAsync({
+      positions,
+      individual_positions: individualPositions.length > 0 ? individualPositions : undefined,
+    })
+
+    setIsSaving(false)
+  }
+
   const handleCancelEdit = () => {
     if (editingPlantingId) {
       const newGridPositions = new Map(gridPositions)
@@ -255,8 +287,11 @@ export const GardenPlotVisual = ({ plotWidth, plotLength, plantings, plants, onO
       const maxX = displayWidth - rect.width
       const maxY = displayHeight - rect.height
 
-      const x = Math.max(0, Math.min((e.clientX - dragOffset.x) / scale, maxX))
-      const y = Math.max(0, Math.min((e.clientY - dragOffset.y) / scale, maxY))
+      const rawX = (e.clientX - dragOffset.x) / scale
+      const rawY = (e.clientY - dragOffset.y) / scale
+
+      const x = Math.round(Math.max(0, Math.min(rawX, maxX)) / 5) * 5
+      const y = Math.round(Math.max(0, Math.min(rawY, maxY)) / 5) * 5
 
       setPositions(prev => prev.map(pos =>
         pos.planting_id === draggedPlant ? { ...pos, x, y } : pos
@@ -323,6 +358,15 @@ export const GardenPlotVisual = ({ plotWidth, plotLength, plantings, plants, onO
 
   return (
     <div className="space-y-4 select-none">
+      <div className="flex justify-end">
+        <button
+          onClick={handleSavePositions}
+          disabled={isSaving || anyOverlap}
+          className="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white px-4 py-2 rounded-md text-sm font-semibold"
+        >
+          {isSaving ? 'Saving...' : 'Save Layout'}
+        </button>
+      </div>
       <div className="border border-gray-300 rounded-lg p-4 bg-white">
         <div className="mb-2 text-sm text-gray-600">
           Plot dimensions: {plotWidth}cm × {plotLength}cm{isRotated && ' (rotated for display)'}
