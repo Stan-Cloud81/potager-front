@@ -23,7 +23,19 @@ A React web application for managing your vegetable and fruit garden. Track plan
 ### Prerequisites
 
 - Node.js 20.14.0 or higher
-- Backend API running at `http://127.0.0.1:8080`
+- Backend API running (default: `http://localhost:8080`)
+
+### Environment Configuration
+
+1. Copy the example environment file:
+```bash
+cp .env.example .env
+```
+
+2. Update the `.env` file with your API URL:
+```bash
+VITE_API_BASE_URL=http://localhost:8080/api/v1
+```
 
 ### Installation
 
@@ -64,12 +76,8 @@ npm run preview
 
 ## API Integration
 
-The application connects to the Potager backend API. See the [SPEC.md](./SPEC.md) for detailed frontend specifications and the backend Swagger documentation at `http://127.0.0.1:8080/swagger/index.html`.
+The application connects to the Potager backend API.
 
 ## Mobile Support
 
 The application is fully responsive and works on mobile devices, tablets, and desktops.
-
-## Default Route
-
-When you first access the application, you'll be redirected to the login page. After logging in, you'll be taken to the Plants page.

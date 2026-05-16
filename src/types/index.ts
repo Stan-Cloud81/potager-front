@@ -91,6 +91,12 @@ export type CreatePlantingRequest = {
   plant_id: string
   plot_id: string
   quantity: number
+  position_x?: number
+  position_y?: number
+  individual_positions?: { x: number; y: number }[]
+  rotation?: number
+  width_factor?: number
+  length_factor?: number
 }
 
 export type UpdatePlantingRequest = {
@@ -125,21 +131,18 @@ export type UpdatePlantingSizeRequest = {
 }
 
 export type UpdatePlantRequest = {
-  name?: string
-  type?: "vegetable" | "fruit"
-  variety?: string
-  planting_months?: number[]
-  harvested_months?: number[]
-  harvest_time_days?: number
-  watering_frequency?: "low" | "medium" | "high"
-  sunlight_requirement?: "low" | "partial" | "full"
-  spacing_between_plants?: number
-  spacing_between_rows?: number
-  days_to_maturity_text?: string
-  germination_temperature?: string
-  growing_method?: string
-  hybrid_status?: string
-  image?: string
-  latin_name?: string
-  soil_ph?: string
+  category?: string
+  description_html?: string
+  details?: PlantDetails
+  distance_par_plante?: number
+  distance_par_rangee?: number
+  famille_plante?: string
+  images_attributs?: string[]
+  images_galerie?: string[]
+  nom_scientifique?: string
+  plantes_associes?: string[]
+  sections_description?: Array<{ type: string; content: string }>
+  titre_plante?: string
+  url?: string
+  url_image_principale?: string
 }
