@@ -185,7 +185,7 @@ export const GardenPlotDetailPage = () => {
                   <div className="flex justify-between items-start mb-3">
                     <div className="flex-1">
                       <h3 className="text-xl font-bold text-gray-900">
-                        {plant.name}
+                        {plant.name} - {plant.variety}
                       </h3>
                       <div className="flex items-center gap-2 mt-1">
                         <button

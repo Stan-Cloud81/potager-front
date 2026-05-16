@@ -2,14 +2,26 @@ import { Plant, CreatePlantRequest } from "../types"
 import { apiRequest } from "./client"
 
 export const getPlants = async (filters?: {
-  name?: string
+  search?: string
   type?: string
   variety?: string
+  planting_months?: number
+  harvested_months?: number
+  watering_frequency?: string
+  sunlight_requirement?: string
+  spacing_between_plants?: string
+  spacing_between_rows?: string
 }): Promise<Plant[]> => {
   const params = new URLSearchParams()
-  if (filters?.name) params.append("name", filters.name)
+  if (filters?.search) params.append("search", filters.search)
   if (filters?.type) params.append("type", filters.type)
   if (filters?.variety) params.append("variety", filters.variety)
+  if (filters?.planting_months) params.append("planting_months", filters.planting_months.toString())
+  if (filters?.harvested_months) params.append("harvested_months", filters.harvested_months.toString())
+  if (filters?.watering_frequency) params.append("watering_frequency", filters.watering_frequency)
+  if (filters?.sunlight_requirement) params.append("sunlight_requirement", filters.sunlight_requirement)
+  if (filters?.spacing_between_plants) params.append("spacing_between_plants", filters.spacing_between_plants)
+  if (filters?.spacing_between_rows) params.append("spacing_between_rows", filters.spacing_between_rows)
   
   const query = params.toString()
   return apiRequest<Plant[]>(`/plants${query ? `?${query}` : ""}`)
