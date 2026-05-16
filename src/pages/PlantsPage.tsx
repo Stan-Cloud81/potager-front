@@ -682,9 +682,39 @@ export const PlantsPage = () => {
                       </div>
                     )}
                     {plant.details?.culture?.nature_du_sol && (
-                      <div className="flex justify-between">
+                      <div className="flex justify-between items-center">
                         <span className="text-gray-600">Nature du sol:</span>
-                        <span className="font-medium capitalize">{Array.isArray(plant.details.culture.nature_du_sol) ? (plant.details.culture.nature_du_sol as string[]).join(', ') : plant.details.culture.nature_du_sol}</span>
+                        <div className="flex gap-1">
+                          {(() => {
+                            const soilTypes = Array.isArray(plant.details.culture.nature_du_sol) 
+                              ? plant.details.culture.nature_du_sol as string[]
+                              : [plant.details.culture.nature_du_sol as string];
+                            
+                            const soilTypeOrder = [
+                              { key: 'bruyère', icon: '/icons/bruyere.png' },
+                              { key: 'argileux', icon: '/icons/argileux.png' },
+                              { key: 'terreau', icon: '/icons/terreau.png' },
+                              { key: 'calcaire', icon: '/icons/calcaire.png' },
+                              { key: 'littoral', icon: '/icons/littoral.png' },
+                              { key: 'caillouteux', icon: '/icons/caillouteux.png' },
+                              { key: 'humifère', icon: '/icons/humifere.png' },
+                              { key: 'tout type de sol', icon: '/icons/tout-type-de-sol.png' }
+                            ];
+                            
+                            const normalizedSoilTypes = soilTypes.map(s => s.toLowerCase());
+                            
+                            return soilTypeOrder
+                              .filter(({ key }) => normalizedSoilTypes.includes(key))
+                              .map(({ key, icon }, idx) => (
+                                <div key={idx} className="relative group">
+                                  <img src={icon} alt={key} className="w-6 h-6" />
+                                  <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 px-2 py-1 text-xs text-white bg-gray-900 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-10">
+                                    {key}
+                                  </span>
+                                </div>
+                              ));
+                          })()}
+                        </div>
                       </div>
                     )}
                     {plant.distance_par_plante ? (
@@ -861,9 +891,39 @@ export const PlantsPage = () => {
                           </div>
                         )}
                         {plant.details?.culture?.nature_du_sol && (
-                          <div className="flex justify-between">
+                          <div className="flex justify-between items-center">
                             <span className="text-gray-600">Nature du sol:</span>
-                            <span className="font-medium">{Array.isArray(plant.details.culture.nature_du_sol) ? (plant.details.culture.nature_du_sol as string[]).join(', ') : plant.details.culture.nature_du_sol}</span>
+                            <div className="flex gap-1">
+                              {(() => {
+                                const soilTypes = Array.isArray(plant.details.culture.nature_du_sol) 
+                                  ? plant.details.culture.nature_du_sol as string[]
+                                  : [plant.details.culture.nature_du_sol as string];
+                                
+                                const soilTypeOrder = [
+                                  { key: 'bruyère', icon: '/icons/bruyere.png' },
+                                  { key: 'argileux', icon: '/icons/argileux.png' },
+                                  { key: 'terreau', icon: '/icons/terreau.png' },
+                                  { key: 'calcaire', icon: '/icons/calcaire.png' },
+                                  { key: 'littoral', icon: '/icons/littoral.png' },
+                                  { key: 'caillouteux', icon: '/icons/caillouteux.png' },
+                                  { key: 'humifère', icon: '/icons/humifere.png' },
+                                  { key: 'tout type de sol', icon: '/icons/tout-type-de-sol.png' }
+                                ];
+                                
+                                const normalizedSoilTypes = soilTypes.map(s => s.toLowerCase());
+                                
+                                return soilTypeOrder
+                                  .filter(({ key }) => normalizedSoilTypes.includes(key))
+                                  .map(({ key, icon }, idx) => (
+                                    <div key={idx} className="relative group">
+                                      <img src={icon} alt={key} className="w-6 h-6" />
+                                      <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 px-2 py-1 text-xs text-white bg-gray-900 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-10">
+                                        {key}
+                                      </span>
+                                    </div>
+                                  ));
+                              })()}
+                            </div>
                           </div>
                         )}
                         {plant.distance_par_plante && (

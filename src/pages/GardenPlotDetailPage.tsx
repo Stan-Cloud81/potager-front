@@ -181,7 +181,7 @@ export const GardenPlotDetailPage = () => {
           >
             ← Back to Plots
           </button>
-          <div className="group">
+          <div className="group space-y-2">
             <div className="inline-flex items-center gap-2">
               <h1 className="text-3xl font-bold text-gray-900">{plot.nom.charAt(0).toUpperCase() + plot.nom.slice(1)}</h1>
               <button
@@ -203,10 +203,20 @@ export const GardenPlotDetailPage = () => {
                 </svg>
               </button>
             </div>
-            <p className="text-gray-600 mt-1">
-              {(plot.largeur / 100).toFixed(2)}m × {(plot.longueur / 100).toFixed(2)}m ({((plot.largeur / 100) * (plot.longueur / 100)).toFixed(2)} m²) • 
-              {' '}{plot.nature_du_sol} • {plot.exposition}
-            </p>
+            <div className="flex items-center gap-2 text-gray-700">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-gray-500" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd" />
+              </svg>
+              <span>{(plot.largeur / 100).toFixed(2)}m × {(plot.longueur / 100).toFixed(2)}m ({((plot.largeur / 100) * (plot.longueur / 100)).toFixed(2)} m²)</span>
+            </div>
+            <div className="flex items-center gap-2 text-gray-700">
+              <img src={`/icons/${plot.nature_du_sol.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase()}.png`} alt={plot.nature_du_sol} className="h-5 w-5" />
+              <span>{plot.nature_du_sol}</span>
+            </div>
+            <div className="flex items-center gap-2 text-gray-700">
+              <img src={`/icons/${plot.exposition.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/\s+/g, '-').toLowerCase()}.png`} alt={plot.exposition} className="h-5 w-5" />
+              <span>{plot.exposition}</span>
+            </div>
           </div>
         </div>
 
