@@ -56,7 +56,10 @@ export const GardenPlotVisual = ({ plotId, plotWidth, plotLength, plantings, pla
   const displayHeight = isRotated ? plotWidth : plotLength
 
   const maxVisualHeight = isPortrait ? windowHeight * 0.6 : MAX_HEIGHT
-  const scale = Math.min(5, maxVisualHeight / displayHeight)
+  const maxVisualWidth = Math.min(windowWidth * 0.85, 1200)
+  const scaleByHeight = maxVisualHeight / displayHeight
+  const scaleByWidth = maxVisualWidth / displayWidth
+  const scale = Math.min(5, scaleByHeight, scaleByWidth)
   const visualWidth = displayWidth * scale
   const visualHeight = displayHeight * scale
 
