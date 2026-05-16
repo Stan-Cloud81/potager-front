@@ -7,9 +7,11 @@ import { getMe } from '../api/auth'
 import { Layout } from '../components/Layout'
 import { PlantImage } from '../components/PlantImage'
 import { MonthIndicator } from '../components/MonthIndicator'
+import { useLanguage } from '../contexts/LanguageContext'
 
 export const PlantsPage = () => {
   const queryClient = useQueryClient()
+  const { language } = useLanguage()
   const [showPlantDetails, setShowPlantDetails] = useState(false)
   const [selectedPlantForDetails, setSelectedPlantForDetails] = useState<string | null>(null)
   const [showAddToPlot, setShowAddToPlot] = useState(false)
@@ -65,10 +67,11 @@ export const PlantsPage = () => {
     spacing_between_rows: getSpacingFilter(filters.spacing_between_rows_min, filters.spacing_between_rows_max),
     page,
     limit,
+    lang: language,
   }
 
   const { data: plantsData, isLoading, error } = useQuery({
-    queryKey: ['plants', activeFilters],
+    queryKey: ['plants', activeFilters, language],
     queryFn: () => getPlants(activeFilters),
   })
 
@@ -77,8 +80,8 @@ export const PlantsPage = () => {
   const totalPages = Math.ceil(totalPlants / limit)
 
   const { data: plantDetails } = useQuery({
-    queryKey: ['plantDetails', selectedPlantForDetails],
-    queryFn: () => getPlantDetails(selectedPlantForDetails!),
+    queryKey: ['plantDetails', selectedPlantForDetails, language],
+    queryFn: () => getPlantDetails(selectedPlantForDetails!, language),
     enabled: !!selectedPlantForDetails,
   })
 

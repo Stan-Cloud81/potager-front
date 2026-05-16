@@ -13,6 +13,7 @@ export const getPlants = async (filters?: {
   spacing_between_rows?: string
   page?: number
   limit?: number
+  lang?: string
 }): Promise<{ plants: Plant[], total: number, page: number, limit: number }> => {
   const params = new URLSearchParams()
   if (filters?.search) params.append("search", filters.search)
@@ -26,17 +27,20 @@ export const getPlants = async (filters?: {
   if (filters?.spacing_between_rows) params.append("spacing_between_rows", filters.spacing_between_rows)
   if (filters?.page) params.append("page", filters.page.toString())
   if (filters?.limit) params.append("limit", filters.limit.toString())
+  if (filters?.lang) params.append("lang", filters.lang)
   
   const query = params.toString()
   return apiRequest<{ plants: Plant[], total: number, page: number, limit: number }>(`/plants${query ? `?${query}` : ""}`)
 }
 
-export const getPlant = async (id: string): Promise<Plant> => {
-  return apiRequest<Plant>(`/plants/${id}`)
+export const getPlant = async (id: string, lang?: string): Promise<Plant> => {
+  const query = lang ? `?lang=${lang}` : ''
+  return apiRequest<Plant>(`/plants/${id}${query}`)
 }
 
-export const getPlantDetails = async (id: string): Promise<any> => {
-  return apiRequest<any>(`/plants/${id}/details`)
+export const getPlantDetails = async (id: string, lang?: string): Promise<any> => {
+  const query = lang ? `?lang=${lang}` : ''
+  return apiRequest<any>(`/plants/${id}/details${query}`)
 }
 
 export const createPlant = async (data: CreatePlantRequest): Promise<Plant> => {

@@ -3,6 +3,7 @@ import { useAuth } from '../hooks/useAuth'
 import { useQuery } from '@tanstack/react-query'
 import { getMe } from '../api/auth'
 import { useState } from 'react'
+import { LanguageSwitcher } from './LanguageSwitcher'
 
 type LayoutProps = {
   children: React.ReactNode
@@ -49,7 +50,8 @@ export const Layout = ({ children }: LayoutProps) => {
                 </Link>
               </div>
             </div>
-            <div className="flex items-center relative">
+            <div className="flex items-center gap-4 relative">
+              <LanguageSwitcher />
               <button
                 onClick={() => setShowUserDropdown(!showUserDropdown)}
                 className="flex items-center gap-2 hover:bg-green-700 px-3 py-2 rounded-md"

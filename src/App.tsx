@@ -5,6 +5,7 @@ import { PlantsPage } from './pages/PlantsPage'
 import { GardenPlotsPage } from './pages/GardenPlotsPage'
 import { GardenPlotDetailPage } from './pages/GardenPlotDetailPage'
 import { useAuth } from './hooks/useAuth'
+import { LanguageProvider } from './contexts/LanguageContext'
 
 function PrivateRoute({ children }: { children: React.ReactNode }) {
   const { token } = useAuth()
@@ -13,37 +14,39 @@ function PrivateRoute({ children }: { children: React.ReactNode }) {
 
 function App() {
   return (
-    <BrowserRouter>
-      <Routes>
-        <Route path="/login" element={<LoginPage />} />
-        <Route path="/register" element={<RegisterPage />} />
-        <Route
-          path="/plants"
-          element={
-            <PrivateRoute>
-              <PlantsPage />
-            </PrivateRoute>
-          }
-        />
-        <Route
-          path="/plots"
-          element={
-            <PrivateRoute>
-              <GardenPlotsPage />
-            </PrivateRoute>
-          }
-        />
-        <Route
-          path="/plots/:id"
-          element={
-            <PrivateRoute>
-              <GardenPlotDetailPage />
-            </PrivateRoute>
-          }
-        />
-        <Route path="/" element={<Navigate to="/plots" />} />
-      </Routes>
-    </BrowserRouter>
+    <LanguageProvider>
+      <BrowserRouter>
+        <Routes>
+          <Route path="/login" element={<LoginPage />} />
+          <Route path="/register" element={<RegisterPage />} />
+          <Route
+            path="/plants"
+            element={
+              <PrivateRoute>
+                <PlantsPage />
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/plots"
+            element={
+              <PrivateRoute>
+                <GardenPlotsPage />
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/plots/:id"
+            element={
+              <PrivateRoute>
+                <GardenPlotDetailPage />
+              </PrivateRoute>
+            }
+          />
+          <Route path="/" element={<Navigate to="/plots" />} />
+        </Routes>
+      </BrowserRouter>
+    </LanguageProvider>
   )
 }
 

@@ -9,11 +9,13 @@ import { PlantImage } from '../components/PlantImage'
 import { MonthIndicator } from '../components/MonthIndicator'
 import { GardenPlotVisual } from '../components/GardenPlotVisual'
 import { formatDate } from '../utils/date'
+import { useLanguage } from '../contexts/LanguageContext'
 
 export const GardenPlotDetailPage = () => {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
   const queryClient = useQueryClient()
+  const { language } = useLanguage()
   const [showForm, setShowForm] = useState(false)
   const [selectedPlantId, setSelectedPlantId] = useState('')
   const [quantity, setQuantity] = useState(1)
@@ -37,13 +39,13 @@ export const GardenPlotDetailPage = () => {
   })
 
   const { data: plants } = useQuery({
-    queryKey: ['plants', plantSearchQuery],
-    queryFn: () => getPlants({ search: plantSearchQuery || undefined, limit: 1000 }),
+    queryKey: ['plants', plantSearchQuery, language],
+    queryFn: () => getPlants({ search: plantSearchQuery || undefined, limit: 1000, lang: language }),
   })
 
   const { data: plantDetails } = useQuery({
-    queryKey: ['plantDetails', selectedPlantForDetails],
-    queryFn: () => getPlantDetails(selectedPlantForDetails!),
+    queryKey: ['plantDetails', selectedPlantForDetails, language],
+    queryFn: () => getPlantDetails(selectedPlantForDetails!, language),
     enabled: !!selectedPlantForDetails,
   })
 
@@ -98,11 +100,11 @@ export const GardenPlotDetailPage = () => {
   const harvestedPlantings = plotPlantings.filter(p => p.status === 'harvested')
 
   const plantQueries = useQuery({
-    queryKey: ['plotPlants', id, plotPlantings.map(p => p.plant_id).join(',')],
+    queryKey: ['plotPlants', id, plotPlantings.map(p => p.plant_id).join(','), language],
     queryFn: async () => {
       const uniquePlantIds = [...new Set(plotPlantings.map(p => p.plant_id))]
       const plantPromises = uniquePlantIds.map(plantId => 
-        getPlant(plantId).catch(() => null)
+        getPlant(plantId, language).catch(() => null)
       )
       const fetchedPlants = await Promise.all(plantPromises)
       return fetchedPlants.filter(p => p !== null)
