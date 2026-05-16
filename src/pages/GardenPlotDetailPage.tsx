@@ -17,6 +17,7 @@ export const GardenPlotDetailPage = () => {
   const [showForm, setShowForm] = useState(false)
   const [selectedPlantId, setSelectedPlantId] = useState('')
   const [quantity, setQuantity] = useState(1)
+  const [plantSearchQuery, setPlantSearchQuery] = useState('')
   const [showPlantDetails, setShowPlantDetails] = useState(false)
   const [selectedPlantForDetails, setSelectedPlantForDetails] = useState<string | null>(null)
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
@@ -35,8 +36,8 @@ export const GardenPlotDetailPage = () => {
   })
 
   const { data: plants } = useQuery({
-    queryKey: ['plants'],
-    queryFn: () => getPlants(),
+    queryKey: ['plants', plantSearchQuery],
+    queryFn: () => getPlants({ search: plantSearchQuery || undefined }),
   })
 
   const { data: plantDetails } = useQuery({
@@ -361,13 +362,21 @@ export const GardenPlotDetailPage = () => {
                 <form onSubmit={handleSubmit} className="space-y-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Select Plant
+                      Search Plant
                     </label>
+                    <input
+                      type="text"
+                      value={plantSearchQuery}
+                      onChange={(e) => setPlantSearchQuery(e.target.value)}
+                      placeholder="Search by name or variety..."
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-green-500 focus:border-green-500 mb-2"
+                    />
                     <select
                       required
                       value={selectedPlantId}
                       onChange={(e) => setSelectedPlantId(e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-green-500 focus:border-green-500"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-green-500 focus:border-green-500 max-h-60"
+                      size={8}
                     >
                       <option value="">Choose a plant...</option>
                       {plants?.plants?.map((plant) => (
