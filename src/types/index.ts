@@ -10,6 +10,14 @@ export type Plant = {
   sunlight_requirement: "low" | "partial" | "full"
   spacing_between_plants: number
   spacing_between_rows: number
+  days_to_maturity_text?: string
+  details?: string[]
+  germination_temperature?: string
+  growing_method?: string
+  hybrid_status?: string
+  image?: string
+  latin_name?: string
+  soil_ph?: string
 }
 
 export type GardenPlot = {

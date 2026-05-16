@@ -449,7 +449,7 @@ export const PlantsPage = () => {
                     </div>
                     <div className="flex justify-between">
                       <span className="text-gray-600">Harvest Time:</span>
-                      <span className="font-medium">{plant.harvest_time_days} days</span>
+                      <span className="font-medium">{plant.days_to_maturity_text || `${plant.harvest_time_days} days`}</span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-gray-600">Watering:</span>
@@ -458,6 +458,10 @@ export const PlantsPage = () => {
                     <div className="flex justify-between">
                       <span className="text-gray-600">Sunlight:</span>
                       <span className="font-medium capitalize">{plant.sunlight_requirement}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Growing Method:</span>
+                      <span className="font-medium capitalize">{plant.growing_method || <span className="text-gray-400 italic">not set</span>}</span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-gray-600">Spacing:</span>
@@ -555,42 +559,79 @@ export const PlantsPage = () => {
                         <MonthIndicator label="Harvest" months={plant.harvested_months} color="red" />
                       </div>
                     </div>
-                    <div className="border-b pb-2">
-                      <div className="text-sm font-semibold text-gray-600 uppercase mb-1">
+                    <div className="border-b pb-4">
+                      <div className="text-sm font-semibold text-gray-600 uppercase mb-3">
                         Plant Information
                       </div>
-                      <div className="text-gray-900 space-y-2">
-                        {Object.entries(plant)
-                          .filter(([key]) => key !== 'id' && key !== 'planting_months' && key !== 'harvested_months')
-                          .map(([key, value]) => {
-                            const getIcon = (key: string) => {
-                              if (key.includes('type')) return '🏷️'
-                              if (key.includes('variety')) return '🌿'
-                              if (key.includes('harvest')) return '⏱️'
-                              if (key.includes('watering')) return '💧'
-                              if (key.includes('sunlight')) return '☀️'
-                              if (key.includes('spacing')) return '📏'
-                              return '•'
-                            }
-                            
-                            return (
-                              <div key={key}>
-                                <span className="font-medium">{getIcon(key)} {key.replace(/_/g, ' ')}: </span>
-                                {Array.isArray(value) ? value.join(', ') : String(value)}
-                              </div>
-                            )
-                          })}
+                      <div className="text-gray-900 space-y-3">
+                        <div>
+                          <span className="font-medium">🔬 Latin Name: </span>
+                          {plant.latin_name ? (
+                            <span className="italic">{plant.latin_name}</span>
+                          ) : (
+                            <span className="text-gray-400 italic">not set</span>
+                          )}
+                        </div>
+                        <div>
+                          <span className="font-medium">🏷️ Type: </span>
+                          <span className="capitalize">{plant.type}</span>
+                        </div>
+                        <div>
+                          <span className="font-medium">🌿 Variety: </span>
+                          {plant.variety}
+                        </div>
+                        <div>
+                          <span className="font-medium">🧬 Hybrid Status: </span>
+                          {plant.hybrid_status || <span className="text-gray-400 italic">not set</span>}
+                        </div>
+                        <div>
+                          <span className="font-medium">⏱️ Harvest Time: </span>
+                          {plant.days_to_maturity_text || `${plant.harvest_time_days} days`}
+                        </div>
+                        <div>
+                          <span className="font-medium">💧 Watering: </span>
+                          <span className="capitalize">{plant.watering_frequency}</span>
+                        </div>
+                        <div>
+                          <span className="font-medium">☀️ Sunlight: </span>
+                          <span className="capitalize">{plant.sunlight_requirement}</span>
+                        </div>
+                        <div>
+                          <span className="font-medium">🌱 Growing Method: </span>
+                          {plant.growing_method ? (
+                            <span className="capitalize">{plant.growing_method}</span>
+                          ) : (
+                            <span className="text-gray-400 italic">not set</span>
+                          )}
+                        </div>
+                        <div>
+                          <span className="font-medium">🌡️ Germination Temp: </span>
+                          {plant.germination_temperature || <span className="text-gray-400 italic">not set</span>}
+                        </div>
+                        <div>
+                          <span className="font-medium">🧪 Soil pH: </span>
+                          {plant.soil_ph || <span className="text-gray-400 italic">not set</span>}
+                        </div>
+                        <div>
+                          <span className="font-medium">📏 Plant Spacing: </span>
+                          {plant.spacing_between_plants}cm
+                        </div>
+                        <div>
+                          <span className="font-medium">📏 Row Spacing: </span>
+                          {plant.spacing_between_rows}cm
+                        </div>
                       </div>
                     </div>
-                    {Array.isArray(plantDetails) && plantDetails.length > 0 && (
-                      <div className="border-b pb-2">
-                        <div className="text-sm font-semibold text-gray-600 uppercase mb-1">
-                          Details
+                    {plant.details && plant.details.length > 0 && (
+                      <div className="border-b pb-4">
+                        <div className="text-sm font-semibold text-gray-600 uppercase mb-3">
+                          Additional Details
                         </div>
-                        <div 
-                          className="text-gray-900" 
-                          dangerouslySetInnerHTML={{ __html: plantDetails.join('<br>') }} 
-                        />
+                        <ul className="text-gray-900 space-y-2 list-disc list-inside">
+                          {plant.details.map((detail, idx) => (
+                            <li key={idx} className="text-sm">{detail}</li>
+                          ))}
+                        </ul>
                       </div>
                     )}
                   </div>
