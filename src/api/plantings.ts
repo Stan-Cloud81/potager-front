@@ -1,4 +1,4 @@
-import { Planting, CreatePlantingRequest, UpdatePlantingStatusRequest, UpdatePlantingQuantityRequest, UpdatePlantingPositionRequest } from "../types"
+import { Planting, CreatePlantingRequest, UpdatePlantingStatusRequest, UpdatePlantingQuantityRequest, UpdatePlantingPositionRequest, UpdatePlantingSizeRequest } from "../types"
 import { apiRequest } from "./client"
 
 export const getPlantings = async (): Promise<Planting[]> => {
@@ -43,6 +43,16 @@ export const updatePlantingPosition = async (
   data: UpdatePlantingPositionRequest
 ): Promise<void> => {
   return apiRequest<void>(`/plantings/${plantingId}/position`, {
+    method: "PATCH",
+    body: JSON.stringify(data),
+  })
+}
+
+export const updatePlantingSize = async (
+  plantingId: string,
+  data: UpdatePlantingSizeRequest
+): Promise<void> => {
+  return apiRequest<void>(`/plantings/${plantingId}/size`, {
     method: "PATCH",
     body: JSON.stringify(data),
   })

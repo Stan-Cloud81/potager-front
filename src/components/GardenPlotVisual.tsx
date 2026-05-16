@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react'
 import { Plant, Planting } from '../types'
-import { updatePlantingPosition } from '../api/plantings'
+import { updatePlantingPosition, updatePlantingSize } from '../api/plantings'
 import { useMutation } from '@tanstack/react-query'
 import { PlantImage } from './PlantImage'
 
@@ -30,10 +30,15 @@ type GridPosition = {
   col: number
 }
 
+type SizeFactor = {
+  width_factor: number
+  length_factor: number
+}
+
 const MAX_HEIGHT = 600
 const EDIT_CELL_SIZE = 60
 
-export const GardenPlotVisual = ({ plotId, plotWidth, plotLength, plantings, plants, onOverlapChange }: GardenPlotVisualProps) => {
+export const GardenPlotVisual = ({ plotWidth, plotLength, plantings, plants, onOverlapChange }: GardenPlotVisualProps) => {
   const [windowWidth, setWindowWidth] = useState(typeof window !== 'undefined' ? window.innerWidth : 1024)
   const [windowHeight, setWindowHeight] = useState(typeof window !== 'undefined' ? window.innerHeight : 768)
 
@@ -75,6 +80,17 @@ export const GardenPlotVisual = ({ plotId, plotWidth, plotLength, plantings, pla
     }))
   })
 
+  const [sizeFactors, setSizeFactors] = useState<Map<string, SizeFactor>>(() => {
+    const initial = new Map<string, SizeFactor>()
+    plantings.forEach((p) => {
+      initial.set(p.id, {
+        width_factor: p.width_factor ?? 1,
+        length_factor: p.length_factor ?? 1,
+      })
+    })
+    return initial
+  })
+
   const [gridPositions, setGridPositions] = useState<Map<string, GridPosition[]>>(() => {
     const initialGridPositions = new Map<string, GridPosition[]>()
     plantings.forEach((planting) => {
@@ -94,6 +110,21 @@ export const GardenPlotVisual = ({ plotId, plotWidth, plotLength, plantings, pla
     })
     return initialGridPositions
   })
+
+  useEffect(() => {
+    setSizeFactors(prev => {
+      const updated = new Map(prev)
+      plantings.forEach((p) => {
+        if (!updated.has(p.id)) {
+          updated.set(p.id, {
+            width_factor: p.width_factor ?? 1,
+            length_factor: p.length_factor ?? 1,
+          })
+        }
+      })
+      return updated
+    })
+  }, [plantings])
 
   useEffect(() => {
     setGridPositions(prev => {
@@ -125,16 +156,6 @@ export const GardenPlotVisual = ({ plotId, plotWidth, plotLength, plantings, pla
     })
   }, [plantings])
 
-  const getOriginalPosition = (x: number, y: number, width: number, height: number) => {
-    if (isRotated) {
-      return {
-        x: plotLength - y - height,
-        y: x,
-      }
-    }
-    return { x, y }
-  }
-
   const [isSaving, setIsSaving] = useState(false)
 
   const savePositionsMutation = useMutation({
@@ -146,10 +167,21 @@ export const GardenPlotVisual = ({ plotId, plotWidth, plotLength, plantings, pla
       }),
   })
 
+  const saveSizeMutation = useMutation({
+    mutationFn: (data: { plantingId: string; width_factor: number; length_factor: number }) =>
+      updatePlantingSize(data.plantingId, {
+        width_factor: data.width_factor,
+        length_factor: data.length_factor,
+      }),
+  })
+
   const [editingPlantingId, setEditingPlantingId] = useState<string | null>(null)
   const [draggedPlant, setDraggedPlant] = useState<string | null>(null)
   const [draggedGridIndex, setDraggedGridIndex] = useState<number | null>(null)
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 })
+  const [resizingPlant, setResizingPlant] = useState<string | null>(null)
+  const [resizeStart, setResizeStart] = useState<{ mouseX: number; mouseY: number; widthFactor: number; lengthFactor: number; baseWidth: number; baseHeight: number; gridCols: number; gridRows: number; corner: 'nw' | 'ne' | 'sw' | 'se'; initialX: number; initialY: number; initialWidth: number; initialHeight: number } | null>(null)
+  const [hoveredPlant, setHoveredPlant] = useState<string | null>(null)
   const containerRef = useRef<HTMLDivElement>(null)
   const editContainerRef = useRef<HTMLDivElement>(null)
 
@@ -160,8 +192,9 @@ export const GardenPlotVisual = ({ plotId, plotWidth, plotLength, plantings, pla
   }).filter(dp => dp.plant)
 
   const getPlantRect = (dp: DraggablePlant) => {
-    const baseWidth = isRotated ? dp.plant.spacing_between_rows : dp.plant.spacing_between_plants
-    const baseHeight = isRotated ? dp.plant.spacing_between_plants : dp.plant.spacing_between_rows
+    const factors = sizeFactors.get(dp.planting.id) || { width_factor: 1, length_factor: 1 }
+    const baseWidth = (isRotated ? dp.plant.spacing_between_rows : dp.plant.spacing_between_plants) * factors.width_factor
+    const baseHeight = (isRotated ? dp.plant.spacing_between_plants : dp.plant.spacing_between_rows) * factors.length_factor
 
     const gridPos = gridPositions.get(dp.planting.id)
     if (gridPos && gridPos.length > 0) {
@@ -199,8 +232,9 @@ export const GardenPlotVisual = ({ plotId, plotWidth, plotLength, plantings, pla
     const currentPlant = draggablePlants.find(dp => dp.planting.id === plantingId)
     if (!currentPlant) return false
 
-    const baseWidth = isRotated ? currentPlant.plant.spacing_between_rows : currentPlant.plant.spacing_between_plants
-    const baseHeight = isRotated ? currentPlant.plant.spacing_between_plants : currentPlant.plant.spacing_between_rows
+    const currentFactors = sizeFactors.get(plantingId) || { width_factor: 1, length_factor: 1 }
+    const baseWidth = (isRotated ? currentPlant.plant.spacing_between_rows : currentPlant.plant.spacing_between_plants) * currentFactors.width_factor
+    const baseHeight = (isRotated ? currentPlant.plant.spacing_between_plants : currentPlant.plant.spacing_between_rows) * currentFactors.length_factor
     const currentGridPos = gridPositions.get(plantingId)
 
     if (currentGridPos && currentGridPos.length > 0) {
@@ -217,8 +251,9 @@ export const GardenPlotVisual = ({ plotId, plotWidth, plotLength, plantings, pla
       return draggablePlants.some(dp => {
         if (dp.planting.id === plantingId) return false
 
-        const otherBaseWidth = isRotated ? dp.plant.spacing_between_rows : dp.plant.spacing_between_plants
-        const otherBaseHeight = isRotated ? dp.plant.spacing_between_plants : dp.plant.spacing_between_rows
+        const otherFactors = sizeFactors.get(dp.planting.id) || { width_factor: 1, length_factor: 1 }
+        const otherBaseWidth = (isRotated ? dp.plant.spacing_between_rows : dp.plant.spacing_between_plants) * otherFactors.width_factor
+        const otherBaseHeight = (isRotated ? dp.plant.spacing_between_plants : dp.plant.spacing_between_rows) * otherFactors.length_factor
         const otherGridPos = gridPositions.get(dp.planting.id)
 
         if (otherGridPos && otherGridPos.length > 0) {
@@ -246,8 +281,9 @@ export const GardenPlotVisual = ({ plotId, plotWidth, plotLength, plantings, pla
       return draggablePlants.some(dp => {
         if (dp.planting.id === plantingId) return false
 
-        const otherBaseWidth = isRotated ? dp.plant.spacing_between_rows : dp.plant.spacing_between_plants
-        const otherBaseHeight = isRotated ? dp.plant.spacing_between_plants : dp.plant.spacing_between_rows
+        const otherFactors = sizeFactors.get(dp.planting.id) || { width_factor: 1, length_factor: 1 }
+        const otherBaseWidth = (isRotated ? dp.plant.spacing_between_rows : dp.plant.spacing_between_plants) * otherFactors.width_factor
+        const otherBaseHeight = (isRotated ? dp.plant.spacing_between_plants : dp.plant.spacing_between_rows) * otherFactors.length_factor
         const otherGridPos = gridPositions.get(dp.planting.id)
 
         if (otherGridPos && otherGridPos.length > 0) {
@@ -307,6 +343,15 @@ export const GardenPlotVisual = ({ plotId, plotWidth, plotLength, plantings, pla
           position_y: Math.round(position.y),
           individual_positions: individualPositions && individualPositions.length > 0 ? individualPositions : undefined,
         })
+
+        const factors = sizeFactors.get(position.planting_id)
+        if (factors) {
+          await saveSizeMutation.mutateAsync({
+            plantingId: position.planting_id,
+            width_factor: factors.width_factor,
+            length_factor: factors.length_factor,
+          })
+        }
       }
     } finally {
       setIsSaving(false)
@@ -343,8 +388,120 @@ export const GardenPlotVisual = ({ plotId, plotWidth, plotLength, plantings, pla
     })
   }
 
+  const handleResizeMouseDown = (e: React.MouseEvent, plantingId: string, corner: 'nw' | 'ne' | 'sw' | 'se') => {
+    e.stopPropagation()
+    e.preventDefault()
+    const dp = draggablePlants.find(d => d.planting.id === plantingId)
+    if (!dp) return
+
+    const factors = sizeFactors.get(plantingId) || { width_factor: 1, length_factor: 1 }
+    const rawBaseWidth = isRotated ? dp.plant.spacing_between_rows : dp.plant.spacing_between_plants
+    const rawBaseHeight = isRotated ? dp.plant.spacing_between_plants : dp.plant.spacing_between_rows
+
+    const gridPos = gridPositions.get(plantingId)
+    let gridCols = dp.planting.quantity
+    let gridRows = 1
+    if (gridPos && gridPos.length > 0) {
+      const minRow = Math.min(...gridPos.map(p => p.row))
+      const maxRow = Math.max(...gridPos.map(p => p.row))
+      const minCol = Math.min(...gridPos.map(p => p.col))
+      const maxCol = Math.max(...gridPos.map(p => p.col))
+      gridCols = maxCol - minCol + 1
+      gridRows = maxRow - minRow + 1
+    }
+
+    const rect = getPlantRect(dp)
+
+    setResizingPlant(plantingId)
+    setResizeStart({
+      mouseX: e.clientX,
+      mouseY: e.clientY,
+      widthFactor: factors.width_factor,
+      lengthFactor: factors.length_factor,
+      baseWidth: rawBaseWidth,
+      baseHeight: rawBaseHeight,
+      gridCols,
+      gridRows,
+      corner,
+      initialX: dp.position.x,
+      initialY: dp.position.y,
+      initialWidth: rect.width,
+      initialHeight: rect.height,
+    })
+  }
+
   const handleMouseMove = (e: React.MouseEvent) => {
     if (!containerRef.current) return
+
+    if (resizingPlant && resizeStart) {
+      const deltaX = (e.clientX - resizeStart.mouseX) / scale
+      const deltaY = (e.clientY - resizeStart.mouseY) / scale
+
+      let newWidthCm = resizeStart.initialWidth
+      let newHeightCm = resizeStart.initialHeight
+      let newX = resizeStart.initialX
+      let newY = resizeStart.initialY
+
+      switch (resizeStart.corner) {
+        case 'se':
+          newWidthCm = resizeStart.initialWidth + deltaX
+          newHeightCm = resizeStart.initialHeight + deltaY
+          break
+        case 'sw':
+          newWidthCm = resizeStart.initialWidth - deltaX
+          newHeightCm = resizeStart.initialHeight + deltaY
+          newX = resizeStart.initialX + deltaX
+          break
+        case 'ne':
+          newWidthCm = resizeStart.initialWidth + deltaX
+          newHeightCm = resizeStart.initialHeight - deltaY
+          newY = resizeStart.initialY + deltaY
+          break
+        case 'nw':
+          newWidthCm = resizeStart.initialWidth - deltaX
+          newHeightCm = resizeStart.initialHeight - deltaY
+          newX = resizeStart.initialX + deltaX
+          newY = resizeStart.initialY + deltaY
+          break
+      }
+
+      const minWidth = resizeStart.gridCols * resizeStart.baseWidth * 0.3
+      const minHeight = resizeStart.gridRows * resizeStart.baseHeight * 0.3
+
+      if (newWidthCm < minWidth) {
+        if (resizeStart.corner === 'sw' || resizeStart.corner === 'nw') {
+          newX = resizeStart.initialX + (resizeStart.initialWidth - minWidth)
+        }
+        newWidthCm = minWidth
+      }
+
+      if (newHeightCm < minHeight) {
+        if (resizeStart.corner === 'ne' || resizeStart.corner === 'nw') {
+          newY = resizeStart.initialY + (resizeStart.initialHeight - minHeight)
+        }
+        newHeightCm = minHeight
+      }
+
+      newX = Math.max(0, Math.min(newX, displayWidth - newWidthCm))
+      newY = Math.max(0, Math.min(newY, displayHeight - newHeightCm))
+
+      const newWidthFactor = Math.round((newWidthCm / (resizeStart.gridCols * resizeStart.baseWidth)) * 10) / 10
+      const newLengthFactor = Math.round((newHeightCm / (resizeStart.gridRows * resizeStart.baseHeight)) * 10) / 10
+
+      setPositions(prev => prev.map(pos =>
+        pos.planting_id === resizingPlant ? { ...pos, x: Math.round(newX / 5) * 5, y: Math.round(newY / 5) * 5 } : pos
+      ))
+
+      setSizeFactors(prev => {
+        const updated = new Map(prev)
+        updated.set(resizingPlant, {
+          width_factor: Math.max(0.3, newWidthFactor),
+          length_factor: Math.max(0.3, newLengthFactor),
+        })
+        return updated
+      })
+      return
+    }
 
     if (draggedPlant) {
       const dp = draggablePlants.find(d => d.planting.id === draggedPlant)
@@ -387,10 +544,12 @@ export const GardenPlotVisual = ({ plotId, plotWidth, plotLength, plantings, pla
   const handleMouseUp = () => {
     setDraggedPlant(null)
     setDraggedGridIndex(null)
+    setResizingPlant(null)
+    setResizeStart(null)
   }
 
-  const getPerimeterPath = (gridPos: GridPosition[]) => {
-    if (gridPos.length === 0) return ''
+  const getPerimeterPath = (gridPos: GridPosition[]): { x1: number; y1: number; x2: number; y2: number }[] => {
+    if (gridPos.length === 0) return []
 
     const occupied = new Set(gridPos.map(p => `${p.row},${p.col}`))
     const edges: { x1: number; y1: number; x2: number; y2: number }[] = []
@@ -445,13 +604,11 @@ export const GardenPlotVisual = ({ plotId, plotWidth, plotLength, plantings, pla
             width: `${visualWidth + 28}px`,
             height: `${visualHeight + 28}px`,
           }}>
-            {/* Corner posts */}
             <div style={{ position: 'absolute', top: 0, left: 0, width: '14px', height: '14px', background: '#4A3C2A', zIndex: 2 }} />
             <div style={{ position: 'absolute', top: 0, right: 0, width: '14px', height: '14px', background: '#4A3C2A', zIndex: 2 }} />
             <div style={{ position: 'absolute', bottom: 0, left: 0, width: '14px', height: '14px', background: '#4A3C2A', zIndex: 2 }} />
             <div style={{ position: 'absolute', bottom: 0, right: 0, width: '14px', height: '14px', background: '#4A3C2A', zIndex: 2 }} />
           
-          {/* Top border */}
           <div style={{
             position: 'absolute',
             top: 0,
@@ -462,7 +619,6 @@ export const GardenPlotVisual = ({ plotId, plotWidth, plotLength, plantings, pla
             zIndex: 1
           }} />
           
-          {/* Bottom border */}
           <div style={{
             position: 'absolute',
             bottom: 0,
@@ -473,7 +629,6 @@ export const GardenPlotVisual = ({ plotId, plotWidth, plotLength, plantings, pla
             zIndex: 1
           }} />
           
-          {/* Left border */}
           <div style={{
             position: 'absolute',
             left: 0,
@@ -484,7 +639,6 @@ export const GardenPlotVisual = ({ plotId, plotWidth, plotLength, plantings, pla
             zIndex: 1
           }} />
           
-          {/* Right border */}
           <div style={{
             position: 'absolute',
             right: 0,
@@ -501,7 +655,7 @@ export const GardenPlotVisual = ({ plotId, plotWidth, plotLength, plantings, pla
             style={{
               width: `${visualWidth}px`,
               height: `${visualHeight}px`,
-              cursor: draggedPlant ? 'grabbing' : 'default',
+              cursor: resizingPlant ? 'nwse-resize' : draggedPlant ? 'grabbing' : 'default',
               background: '#6B4423',
               backgroundImage: `
                 radial-gradient(circle at 20% 30%, rgba(90, 60, 35, 0.3) 1px, transparent 1px),
@@ -524,12 +678,19 @@ export const GardenPlotVisual = ({ plotId, plotWidth, plotLength, plantings, pla
 
             const overlapping = hasOverlap(dp.planting.id)
             const rect = getPlantRect(dp)
-            const baseWidth = isRotated ? dp.plant.spacing_between_rows : dp.plant.spacing_between_plants
-            const baseHeight = isRotated ? dp.plant.spacing_between_plants : dp.plant.spacing_between_rows
+            const factors = sizeFactors.get(dp.planting.id) || { width_factor: 1, length_factor: 1 }
+            const isUndersized = factors.width_factor < 1 || factors.length_factor < 1
+            const isModified = factors.width_factor !== 1 || factors.length_factor !== 1
+            const baseWidth = (isRotated ? dp.plant.spacing_between_rows : dp.plant.spacing_between_plants) * factors.width_factor
+            const baseHeight = (isRotated ? dp.plant.spacing_between_plants : dp.plant.spacing_between_rows) * factors.length_factor
             const gridPos = gridPositions.get(dp.planting.id)
 
             return (
-              <div key={dp.planting.id}>
+              <div 
+                key={dp.planting.id}
+                onMouseEnter={() => setHoveredPlant(dp.planting.id)}
+                onMouseLeave={() => setHoveredPlant(null)}
+              >
                 {gridPos && gridPos.length > 0 ? (
                   <>
                     {gridPos.map((pos, idx) => {
@@ -542,7 +703,9 @@ export const GardenPlotVisual = ({ plotId, plotWidth, plotLength, plantings, pla
                           className={`absolute rounded cursor-grab active:cursor-grabbing ${
                             overlapping 
                               ? 'bg-red-200 border-red-500' 
-                              : 'bg-green-200 border-green-600'
+                              : isUndersized
+                                ? 'bg-amber-200 border-amber-500'
+                                : 'bg-green-200 border-green-600'
                           }`}
                           style={{
                             left: `${(dp.position.x + (pos.col - minCol) * baseWidth) * scale}px`,
@@ -584,6 +747,11 @@ export const GardenPlotVisual = ({ plotId, plotWidth, plotLength, plantings, pla
                         <div className="font-semibold leading-tight" style={{ fontSize: '8px' }}>
                           ×{dp.planting.quantity}
                         </div>
+                        {isModified && (
+                          <div className={`${isUndersized ? 'text-amber-700' : 'text-blue-700'} leading-tight`} style={{ fontSize: '7px' }}>
+                            {isUndersized ? '⚠ Reduced spacing' : '↔ Custom spacing'}
+                          </div>
+                        )}
                       </div>
                     </div>
                     <svg
@@ -606,19 +774,102 @@ export const GardenPlotVisual = ({ plotId, plotWidth, plotLength, plantings, pla
                             y1={((edge.y1 - minRow) * baseHeight) * scale}
                             x2={((edge.x2 - minCol) * baseWidth) * scale}
                             y2={((edge.y2 - minRow) * baseHeight) * scale}
-                            stroke="#059669"
+                            stroke={isUndersized ? '#d97706' : isModified ? '#2563eb' : '#059669'}
                             strokeWidth="3"
                           />
                         )
                       })}
                     </svg>
+                    {isModified && hoveredPlant === dp.planting.id && (
+                      <button
+                        className="absolute z-20 text-white text-xs px-2 py-1 rounded shadow-lg pointer-events-auto"
+                        style={{
+                          left: `${(dp.position.x + rect.width / 2) * scale}px`,
+                          top: `${(dp.position.y + 4) * scale}px`,
+                          transform: 'translate(-50%, 0)',
+                          background: isUndersized ? '#d97706' : '#2563eb',
+                        }}
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          setSizeFactors(prev => {
+                            const updated = new Map(prev)
+                            updated.set(dp.planting.id, { width_factor: 1, length_factor: 1 })
+                            return updated
+                          })
+                        }}
+                      >
+                        Reset Size
+                      </button>
+                    )}
+                    {hoveredPlant === dp.planting.id && (
+                      <>
+                        <div
+                          className="absolute cursor-nwse-resize z-10"
+                          style={{
+                            left: `${dp.position.x * scale - 8}px`,
+                            top: `${dp.position.y * scale - 8}px`,
+                            width: '16px',
+                            height: '16px',
+                            background: isUndersized ? '#d97706' : isModified ? '#2563eb' : '#059669',
+                            borderRadius: '3px',
+                            border: '2px solid white',
+                            boxShadow: '0 1px 3px rgba(0,0,0,0.3)',
+                          }}
+                          onMouseDown={(e) => handleResizeMouseDown(e, dp.planting.id, 'nw')}
+                        />
+                        <div
+                          className="absolute cursor-nesw-resize z-10"
+                          style={{
+                            left: `${(dp.position.x + rect.width) * scale - 8}px`,
+                            top: `${dp.position.y * scale - 8}px`,
+                            width: '16px',
+                            height: '16px',
+                            background: isUndersized ? '#d97706' : isModified ? '#2563eb' : '#059669',
+                            borderRadius: '3px',
+                            border: '2px solid white',
+                            boxShadow: '0 1px 3px rgba(0,0,0,0.3)',
+                          }}
+                          onMouseDown={(e) => handleResizeMouseDown(e, dp.planting.id, 'ne')}
+                        />
+                        <div
+                          className="absolute cursor-nesw-resize z-10"
+                          style={{
+                            left: `${dp.position.x * scale - 8}px`,
+                            top: `${(dp.position.y + rect.height) * scale - 8}px`,
+                            width: '16px',
+                            height: '16px',
+                            background: isUndersized ? '#d97706' : isModified ? '#2563eb' : '#059669',
+                            borderRadius: '3px',
+                            border: '2px solid white',
+                            boxShadow: '0 1px 3px rgba(0,0,0,0.3)',
+                          }}
+                          onMouseDown={(e) => handleResizeMouseDown(e, dp.planting.id, 'sw')}
+                        />
+                        <div
+                          className="absolute cursor-nwse-resize z-10"
+                          style={{
+                            left: `${(dp.position.x + rect.width) * scale - 8}px`,
+                            top: `${(dp.position.y + rect.height) * scale - 8}px`,
+                            width: '16px',
+                            height: '16px',
+                            background: isUndersized ? '#d97706' : isModified ? '#2563eb' : '#059669',
+                            borderRadius: '3px',
+                            border: '2px solid white',
+                            boxShadow: '0 1px 3px rgba(0,0,0,0.3)',
+                          }}
+                          onMouseDown={(e) => handleResizeMouseDown(e, dp.planting.id, 'se')}
+                        />
+                      </>
+                    )}
                   </>
                 ) : (
                   <div
                     className={`absolute border-2 rounded cursor-grab active:cursor-grabbing flex items-center justify-center text-xs font-semibold ${
                       overlapping 
                         ? 'bg-red-200 border-red-500 text-red-900' 
-                        : 'bg-green-200 border-green-600 text-green-900'
+                        : isUndersized
+                          ? 'bg-amber-200 border-amber-500 text-amber-900'
+                          : 'bg-green-200 border-green-600 text-green-900'
                     }`}
                     style={{
                         left: `${dp.position.x * scale}px`,
@@ -632,8 +883,94 @@ export const GardenPlotVisual = ({ plotId, plotWidth, plotLength, plantings, pla
                     <div className="text-center">
                       <div>{dp.plant.name}</div>
                       <div className="text-xs">×{dp.planting.quantity}</div>
+                      {isModified && (
+                        <div className={isUndersized ? 'text-amber-700' : 'text-blue-700'} style={{ fontSize: '8px' }}>
+                          {isUndersized ? '⚠ Reduced spacing' : '↔ Custom spacing'}
+                        </div>
+                      )}
                     </div>
                   </div>
+                )}
+                {!(gridPos && gridPos.length > 0) && isModified && hoveredPlant === dp.planting.id && (
+                  <button
+                    className="absolute z-20 text-white text-xs px-2 py-1 rounded shadow-lg pointer-events-auto"
+                    style={{
+                      left: `${(dp.position.x + rect.width / 2) * scale}px`,
+                      top: `${(dp.position.y + 4) * scale}px`,
+                      transform: 'translate(-50%, 0)',
+                      background: isUndersized ? '#d97706' : '#2563eb',
+                    }}
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      setSizeFactors(prev => {
+                        const updated = new Map(prev)
+                        updated.set(dp.planting.id, { width_factor: 1, length_factor: 1 })
+                        return updated
+                      })
+                    }}
+                  >
+                    Reset Size
+                  </button>
+                )}
+                {!(gridPos && gridPos.length > 0) && hoveredPlant === dp.planting.id && (
+                  <>
+                    <div
+                      className="absolute cursor-nwse-resize z-10"
+                      style={{
+                        left: `${dp.position.x * scale - 8}px`,
+                        top: `${dp.position.y * scale - 8}px`,
+                        width: '16px',
+                        height: '16px',
+                        background: isUndersized ? '#d97706' : '#059669',
+                        borderRadius: '3px',
+                        border: '2px solid white',
+                        boxShadow: '0 1px 3px rgba(0,0,0,0.3)',
+                      }}
+                      onMouseDown={(e) => handleResizeMouseDown(e, dp.planting.id, 'nw')}
+                    />
+                    <div
+                      className="absolute cursor-nesw-resize z-10"
+                      style={{
+                        left: `${(dp.position.x + rect.width) * scale - 8}px`,
+                        top: `${dp.position.y * scale - 8}px`,
+                        width: '16px',
+                        height: '16px',
+                        background: isUndersized ? '#d97706' : '#059669',
+                        borderRadius: '3px',
+                        border: '2px solid white',
+                        boxShadow: '0 1px 3px rgba(0,0,0,0.3)',
+                      }}
+                      onMouseDown={(e) => handleResizeMouseDown(e, dp.planting.id, 'ne')}
+                    />
+                    <div
+                      className="absolute cursor-nesw-resize z-10"
+                      style={{
+                        left: `${dp.position.x * scale - 8}px`,
+                        top: `${(dp.position.y + rect.height) * scale - 8}px`,
+                        width: '16px',
+                        height: '16px',
+                        background: isUndersized ? '#d97706' : '#059669',
+                        borderRadius: '3px',
+                        border: '2px solid white',
+                        boxShadow: '0 1px 3px rgba(0,0,0,0.3)',
+                      }}
+                      onMouseDown={(e) => handleResizeMouseDown(e, dp.planting.id, 'sw')}
+                    />
+                    <div
+                      className="absolute cursor-nwse-resize z-10"
+                      style={{
+                        left: `${(dp.position.x + rect.width) * scale - 8}px`,
+                        top: `${(dp.position.y + rect.height) * scale - 8}px`,
+                        width: '16px',
+                        height: '16px',
+                        background: isUndersized ? '#d97706' : '#059669',
+                        borderRadius: '3px',
+                        border: '2px solid white',
+                        boxShadow: '0 1px 3px rgba(0,0,0,0.3)',
+                      }}
+                      onMouseDown={(e) => handleResizeMouseDown(e, dp.planting.id, 'se')}
+                    />
+                  </>
                 )}
               </div>
             )
