@@ -5,6 +5,7 @@ import { getPlants } from '../api/plants'
 import { getPlots } from '../api/plots'
 import { CreatePlantingRequest } from '../types'
 import { Layout } from '../components/Layout'
+import { formatDate } from '../utils/date'
 
 export const PlantingsPage = () => {
   const [showForm, setShowForm] = useState(false)
@@ -172,13 +173,13 @@ export const PlantingsPage = () => {
                     <div className="flex justify-between">
                       <span className="text-gray-600">Planted:</span>
                       <span className="font-medium">
-                        {new Date(planting.planted_at).toLocaleDateString()}
+                        {formatDate(planting.planted_at)}
                       </span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-gray-600">Expected Harvest:</span>
                       <span className="font-medium">
-                        {new Date(planting.expected_harvest).toLocaleDateString()}
+                        {formatDate(planting.expected_harvest)}
                       </span>
                     </div>
                   </div>

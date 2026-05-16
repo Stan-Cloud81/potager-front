@@ -1,4 +1,5 @@
 import { useState, FormEvent } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { getPlots, createPlot } from '../api/plots'
 import { getPlantings } from '../api/plantings'
@@ -7,6 +8,7 @@ import { CreateGardenPlotRequest } from '../types'
 import { Layout } from '../components/Layout'
 
 export const GardenPlotsPage = () => {
+  const navigate = useNavigate()
   const [showForm, setShowForm] = useState(false)
   const [formData, setFormData] = useState<CreateGardenPlotRequest>({
     name: '',
@@ -99,7 +101,11 @@ export const GardenPlotsPage = () => {
             {plots?.map((plot) => {
               const counts = getPlotCounts(plot.id)
               return (
-                <div key={plot.id} className="bg-white shadow-lg rounded-xl overflow-hidden border border-gray-200 hover:shadow-xl transition-shadow">
+                <div 
+                  key={plot.id} 
+                  onClick={() => navigate(`/plots/${plot.id}`)}
+                  className="bg-white shadow-lg rounded-xl overflow-hidden border border-gray-200 hover:shadow-xl transition-shadow cursor-pointer"
+                >
                   <div className="p-6">
                     <h3 className="text-2xl font-bold text-gray-900 mb-4">
                       {plot.name}

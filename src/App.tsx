@@ -3,6 +3,7 @@ import { LoginPage } from './pages/LoginPage'
 import { RegisterPage } from './pages/RegisterPage'
 import { PlantsPage } from './pages/PlantsPage'
 import { GardenPlotsPage } from './pages/GardenPlotsPage'
+import { GardenPlotDetailPage } from './pages/GardenPlotDetailPage'
 import { PlantingsPage } from './pages/PlantingsPage'
 import { useAuth } from './hooks/useAuth'
 
@@ -30,6 +31,14 @@ function App() {
           element={
             <PrivateRoute>
               <GardenPlotsPage />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/plots/:id"
+          element={
+            <PrivateRoute>
+              <GardenPlotDetailPage />
             </PrivateRoute>
           }
         />
