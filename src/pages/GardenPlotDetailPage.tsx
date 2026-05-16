@@ -8,7 +8,7 @@ import { Layout } from '../components/Layout'
 import { PlantImage } from '../components/PlantImage'
 import { MonthIndicator } from '../components/MonthIndicator'
 import { GardenPlotVisual } from '../components/GardenPlotVisual'
-import { formatDate } from '../utils/date'
+import { formatDate, formatDateFrench } from '../utils/date'
 import { useLanguage } from '../contexts/LanguageContext'
 
 export const GardenPlotDetailPage = () => {
@@ -328,43 +328,57 @@ export const GardenPlotDetailPage = () => {
                   </div>
                   
                   <div className="space-y-2 text-sm mb-4">
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">Variety:</span>
-                      <span className="font-medium">{plant.variety}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">Type:</span>
-                      <span className="font-medium capitalize">{plant.type}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">💧 Watering:</span>
-                      <span className="font-medium capitalize">{plant.watering_frequency}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">☀️ Sunlight:</span>
-                      <span className="font-medium capitalize">{plant.sunlight_requirement}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">📏 Spacing:</span>
-                      <span className="font-medium">{plant.spacing_between_plants}cm</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">📏 Row Spacing:</span>
-                      <span className="font-medium">{plant.spacing_between_rows}cm</span>
-                    </div>
+                    {(plant.type || plant.category) && (
+                      <div className="flex justify-between">
+                        <span className="text-gray-600">Type:</span>
+                        <span className="font-medium capitalize">{plant.type || plant.category}</span>
+                      </div>
+                    )}
+                    {plant.famille_plante && (
+                      <div className="flex justify-between">
+                        <span className="text-gray-600">Famille:</span>
+                        <span className="font-medium">{plant.famille_plante}</span>
+                      </div>
+                    )}
+                    {plant.details?.culture?.besoin_en_eau && (
+                      <div className="flex justify-between">
+                        <span className="text-gray-600">Besoin en eau:</span>
+                        <span className="font-medium capitalize">{plant.details.culture.besoin_en_eau}</span>
+                      </div>
+                    )}
+                    {(plant.distance_par_plante || plant.spacing_between_plants) && (
+                      <div className="flex justify-between">
+                        <span className="text-gray-600">Distance par plante:</span>
+                        <span className="font-medium">{plant.distance_par_plante || plant.spacing_between_plants} cm</span>
+                      </div>
+                    )}
+                    {(plant.distance_par_rangee || plant.spacing_between_rows) && (
+                      <div className="flex justify-between">
+                        <span className="text-gray-600">Distance par rangée:</span>
+                        <span className="font-medium">{plant.distance_par_rangee || plant.spacing_between_rows} cm</span>
+                      </div>
+                    )}
                   </div>
 
                   <div className="border-t pt-3 space-y-1 text-sm">
                     <div className="flex justify-between">
-                      <span className="text-gray-600">Planted:</span>
+                      <span className="text-gray-600">Planté:</span>
                       <span className="font-medium">
-                        {formatDate(planting.planted_at)}
+                        {formatDateFrench(planting.planted_at)}
                       </span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-gray-600">Harvest:</span>
-                      <span className="font-medium">
-                        {formatDate(planting.expected_harvest)}
+                      <span className="text-gray-600">Récolte dans:</span>
+                      <span className="font-medium relative group cursor-help">
+                        {(() => {
+                          const harvestDate = new Date(planting.expected_harvest)
+                          const today = new Date()
+                          const daysLeft = Math.ceil((harvestDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24))
+                          return `${daysLeft} jour${daysLeft !== 1 ? 's' : ''}`
+                        })()}
+                        <span className="absolute bottom-full right-0 mb-1 px-2 py-1 text-xs text-white bg-gray-900 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-10">
+                          {formatDateFrench(planting.expected_harvest)}
+                        </span>
                       </span>
                     </div>
                   </div>
