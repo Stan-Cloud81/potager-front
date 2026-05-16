@@ -1,16 +1,17 @@
 import { useState, useEffect } from 'react'
-import { getAuthToken, setAuthToken, clearAuthToken } from '../api/client'
+import { getAuthToken, setAuthToken, setRefreshToken, clearAllTokens } from '../api/client'
 
 export const useAuth = () => {
   const [token, setToken] = useState<string | null>(getAuthToken())
 
-  const saveToken = (newToken: string) => {
+  const saveToken = (newToken: string, newRefreshToken: string) => {
     setAuthToken(newToken)
+    setRefreshToken(newRefreshToken)
     setToken(newToken)
   }
 
   const logout = () => {
-    clearAuthToken()
+    clearAllTokens()
     setToken(null)
   }
 

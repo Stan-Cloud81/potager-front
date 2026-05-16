@@ -18,3 +18,10 @@ export const register = async (data: RegisterRequest) => {
 export const getMe = async (): Promise<{ email: string, is_admin?: boolean }> => {
   return apiRequest<{ email: string, is_admin?: boolean }>("/auth/me")
 }
+
+export const refreshToken = async (refreshToken: string): Promise<LoginResponse> => {
+  return apiRequest<LoginResponse>("/auth/refresh", {
+    method: "POST",
+    body: JSON.stringify({ refresh_token: refreshToken }),
+  })
+}

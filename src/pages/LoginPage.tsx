@@ -13,7 +13,7 @@ export const LoginPage = () => {
   const loginMutation = useMutation({
     mutationFn: login,
     onSuccess: (data) => {
-      saveToken(data.token)
+      saveToken(data.token, data.refresh_token)
       navigate('/plots')
     },
   })

@@ -72,6 +72,7 @@ export type LoginRequest = {
 
 export type LoginResponse = {
   token: string
+  refresh_token: string
   user_id: string
   email: string
 }
