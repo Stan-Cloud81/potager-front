@@ -29,6 +29,10 @@ export type Planting = {
   expected_harvest: string
   status: "planned" | "planted" | "harvested"
   quantity: number
+  position_x?: number
+  position_y?: number
+  individual_positions?: { x: number; y: number }[]
+  variety?: string
 }
 
 export type LoginRequest = {
@@ -65,20 +69,8 @@ export type UpdatePlantingQuantityRequest = {
   quantity: number
 }
 
-export type PlantPosition = {
-  planting_id: string
-  x: number
-  y: number
-}
-
-export type IndividualPlantPosition = {
-  planting_id: string
-  index: number
-  x: number
-  y: number
-}
-
-export type UpdatePlantPositionsRequest = {
-  positions: PlantPosition[]
-  individual_positions?: IndividualPlantPosition[]
+export type UpdatePlantingPositionRequest = {
+  position_x: number
+  position_y: number
+  individual_positions?: { x: number; y: number }[]
 }

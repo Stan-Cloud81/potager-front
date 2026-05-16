@@ -1,8 +1,14 @@
 import { useState, useRef, useEffect } from 'react'
-import { Plant, Planting, PlantPosition, IndividualPlantPosition } from '../types'
-import { updatePlantPositions } from '../api/plantings'
+import { Plant, Planting } from '../types'
+import { updatePlantingPosition } from '../api/plantings'
 import { useMutation } from '@tanstack/react-query'
 import { PlantImage } from './PlantImage'
+
+type PlantPosition = {
+  planting_id: string
+  x: number
+  y: number
+}
 
 type GardenPlotVisualProps = {
   plotId: string
@@ -57,19 +63,31 @@ export const GardenPlotVisual = ({ plotId, plotWidth, plotLength, plantings, pla
   const [positions, setPositions] = useState<PlantPosition[]>(() => {
     return plantings.map((p, i) => ({
       planting_id: p.id,
-      x: Math.round((10 + (i % 3) * 30) / 5) * 5,
-      y: Math.round((10 + Math.floor(i / 3) * 30) / 5) * 5,
+      x: p.position_x !== undefined && p.position_x !== null 
+        ? p.position_x 
+        : Math.round((10 + (i % 3) * 30) / 5) * 5,
+      y: p.position_y !== undefined && p.position_y !== null 
+        ? p.position_y 
+        : Math.round((10 + Math.floor(i / 3) * 30) / 5) * 5,
     }))
   })
 
   const [gridPositions, setGridPositions] = useState<Map<string, GridPosition[]>>(() => {
     const initialGridPositions = new Map<string, GridPosition[]>()
     plantings.forEach((planting) => {
-      const initialGrid: GridPosition[] = []
-      for (let i = 0; i < planting.quantity; i++) {
-        initialGrid.push({ row: 0, col: i })
+      if (planting.individual_positions && planting.individual_positions.length > 0) {
+        const gridPos = planting.individual_positions.map(pos => ({
+          row: pos.y,
+          col: pos.x,
+        }))
+        initialGridPositions.set(planting.id, gridPos)
+      } else {
+        const initialGrid: GridPosition[] = []
+        for (let i = 0; i < planting.quantity; i++) {
+          initialGrid.push({ row: 0, col: i })
+        }
+        initialGridPositions.set(planting.id, initialGrid)
       }
-      initialGridPositions.set(planting.id, initialGrid)
     })
     return initialGridPositions
   })
@@ -87,8 +105,12 @@ export const GardenPlotVisual = ({ plotId, plotWidth, plotLength, plantings, pla
   const [isSaving, setIsSaving] = useState(false)
 
   const savePositionsMutation = useMutation({
-    mutationFn: (data: { positions: PlantPosition[]; individual_positions?: IndividualPlantPosition[] }) =>
-      updatePlantPositions(plotId, data),
+    mutationFn: (data: { plantingId: string; position_x: number; position_y: number; individual_positions?: { x: number; y: number }[] }) =>
+      updatePlantingPosition(data.plantingId, {
+        position_x: data.position_x,
+        position_y: data.position_y,
+        individual_positions: data.individual_positions,
+      }),
   })
 
   const [editingPlantingId, setEditingPlantingId] = useState<string | null>(null)
@@ -238,24 +260,24 @@ export const GardenPlotVisual = ({ plotId, plotWidth, plotLength, plantings, pla
   const handleSavePositions = async () => {
     setIsSaving(true)
 
-    const individualPositions: IndividualPlantPosition[] = []
-    gridPositions.forEach((gridPos, plantingId) => {
-      gridPos.forEach((pos, index) => {
-        individualPositions.push({
-          planting_id: plantingId,
-          index,
+    try {
+      for (const position of positions) {
+        const gridPos = gridPositions.get(position.planting_id)
+        const individualPositions = gridPos?.map(pos => ({
           x: pos.col,
           y: pos.row,
+        }))
+
+        await savePositionsMutation.mutateAsync({
+          plantingId: position.planting_id,
+          position_x: Math.round(position.x),
+          position_y: Math.round(position.y),
+          individual_positions: individualPositions && individualPositions.length > 0 ? individualPositions : undefined,
         })
-      })
-    })
-
-    await savePositionsMutation.mutateAsync({
-      positions,
-      individual_positions: individualPositions.length > 0 ? individualPositions : undefined,
-    })
-
-    setIsSaving(false)
+      }
+    } finally {
+      setIsSaving(false)
+    }
   }
 
   const handleCancelEdit = () => {
