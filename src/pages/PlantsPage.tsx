@@ -592,8 +592,8 @@ export const PlantsPage = () => {
                     </h3>
                   </div>
                   <div className="space-y-3 mb-4">
-                    <MonthIndicator label="Seedling" months={plant.planting_months} color="green" />
-                    <MonthIndicator label="Harvest" months={plant.harvested_months} color="red" />
+                    <MonthIndicator label="Seedling" months={plant.details?.culture?.['periode_de_semis (sous_abri)'] as string[] | undefined} color="green" />
+                    <MonthIndicator label="Harvest" months={plant.details?.culture?.['periode_de_recolte'] as string[] | undefined} color="red" />
                   </div>
                   <div className="space-y-2 text-sm">
                     <div className="flex justify-between">
@@ -712,8 +712,8 @@ export const PlantsPage = () => {
                         Planting Schedule
                       </div>
                       <div className="space-y-3">
-                        <MonthIndicator label="Seedling" months={plant.planting_months} color="green" />
-                        <MonthIndicator label="Harvest" months={plant.harvested_months} color="red" />
+                        <MonthIndicator label="Seedling" months={plant.details?.culture?.['periode_de_semis (sous_abri)'] as string[] | undefined} color="green" />
+                        <MonthIndicator label="Harvest" months={plant.details?.culture?.['periode_de_recolte'] as string[] | undefined} color="red" />
                       </div>
                     </div>
                     <div className="border-b pb-4">
