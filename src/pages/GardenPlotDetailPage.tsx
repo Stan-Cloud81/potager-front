@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { getPlot } from '../api/plots'
 import { getPlantings, createPlanting, updatePlantingStatus, updatePlantingQuantity, deletePlanting } from '../api/plantings'
-import { getPlants, getPlantDetails } from '../api/plants'
+import { getPlants, getPlant, getPlantDetails } from '../api/plants'
 import { Layout } from '../components/Layout'
 import { PlantImage } from '../components/PlantImage'
 import { MonthIndicator } from '../components/MonthIndicator'
@@ -37,7 +37,7 @@ export const GardenPlotDetailPage = () => {
 
   const { data: plants } = useQuery({
     queryKey: ['plants', plantSearchQuery],
-    queryFn: () => getPlants({ search: plantSearchQuery || undefined }),
+    queryFn: () => getPlants({ search: plantSearchQuery || undefined, limit: 1000 }),
   })
 
   const { data: plantDetails } = useQuery({
@@ -89,8 +89,21 @@ export const GardenPlotDetailPage = () => {
 
   const plotPlantings = allPlantings?.filter(p => p.plot_id === id) || []
 
+  const plantQueries = useQuery({
+    queryKey: ['plotPlants', id, plotPlantings.map(p => p.plant_id).join(',')],
+    queryFn: async () => {
+      const uniquePlantIds = [...new Set(plotPlantings.map(p => p.plant_id))]
+      const plantPromises = uniquePlantIds.map(plantId => 
+        getPlant(plantId).catch(() => null)
+      )
+      const fetchedPlants = await Promise.all(plantPromises)
+      return fetchedPlants.filter(p => p !== null)
+    },
+    enabled: plotPlantings.length > 0,
+  })
+
   const getPlantInfo = (plantId: string) => {
-    return plants?.plants?.find(p => p.id === plantId)
+    return plantQueries.data?.find(p => p.id === plantId) || plants?.plants?.find(p => p.id === plantId)
   }
 
   const getNextStatus = (currentStatus: string): 'planted' | 'harvested' | null => {
@@ -152,7 +165,7 @@ export const GardenPlotDetailPage = () => {
           </div>
         </div>
 
-        {plants && plotPlantings.length > 0 && (
+        {plantQueries.data && plotPlantings.length > 0 && (
           <div className="mb-8">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-2xl font-bold text-gray-900">Garden Layout</h2>
@@ -167,7 +180,7 @@ export const GardenPlotDetailPage = () => {
               plotWidth={plot.width * 100}
               plotLength={plot.length * 100}
               plantings={plotPlantings}
-              plants={plants}
+              plants={plantQueries.data}
               onOverlapChange={setHasOverlap}
             />
           </div>
@@ -463,7 +476,7 @@ export const GardenPlotDetailPage = () => {
         )}
 
         {showPlantDetails && plantDetails && selectedPlantForDetails && (() => {
-          const plant = plants?.find(p => p.id === selectedPlantForDetails)
+          const plant = plants?.plants?.find(p => p.id === selectedPlantForDetails)
           if (!plant) return null
           
           return (

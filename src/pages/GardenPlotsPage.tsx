@@ -66,7 +66,7 @@ export const GardenPlotsPage = () => {
     let fruits = 0
 
     plotPlantings.forEach(planting => {
-      const plant = plants.find(p => p.id === planting.plant_id)
+      const plant = plants?.plants?.find(p => p.id === planting.plant_id)
       if (plant) {
         if (plant.type === 'vegetable') {
           vegetables++
