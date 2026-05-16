@@ -19,6 +19,10 @@ export const getPlant = async (id: string): Promise<Plant> => {
   return apiRequest<Plant>(`/plants/${id}`)
 }
 
+export const getPlantDetails = async (id: string): Promise<any> => {
+  return apiRequest<any>(`/plants/${id}/details`)
+}
+
 export const createPlant = async (data: CreatePlantRequest): Promise<Plant> => {
   return apiRequest<Plant>("/plants", {
     method: "POST",
