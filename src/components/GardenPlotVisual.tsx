@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react'
 import { Plant, Planting } from '../types'
-import { updatePlantingPosition, updatePlantingSize } from '../api/plantings'
-import { useMutation } from '@tanstack/react-query'
+import { updatePlantingPosition, updatePlantingSize, updatePlantingQuantity } from '../api/plantings'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { PlantImage } from './PlantImage'
 
 type PlantPosition = {
@@ -54,6 +54,7 @@ const createOptimalGrid = (quantity: number): GridPosition[] => {
 }
 
 export const GardenPlotVisual = ({ largeur, longueur, plantings, plants, onOverlapChange, onPlantingStatusChange }: GardenPlotVisualProps) => {
+  const queryClient = useQueryClient()
   const [windowWidth, setWindowWidth] = useState(typeof window !== 'undefined' ? window.innerWidth : 1024)
   const [windowHeight, setWindowHeight] = useState(typeof window !== 'undefined' ? window.innerHeight : 768)
 
@@ -135,6 +136,8 @@ export const GardenPlotVisual = ({ largeur, longueur, plantings, plants, onOverl
     return initial
   })
 
+  const [editingPlantingId, setEditingPlantingId] = useState<string | null>(null)
+
   useEffect(() => {
     setSizeFactors(prev => {
       const updated = new Map(prev)
@@ -158,17 +161,18 @@ export const GardenPlotVisual = ({ largeur, longueur, plantings, plants, onOverl
       plantings
         .filter(p => p.position_x !== undefined && p.position_x !== null && p.position_y !== undefined && p.position_y !== null)
         .forEach((planting) => {
+          if (planting.id === editingPlantingId) {
+            return
+          }
+          
           const existing = updated.get(planting.id)
           
-          if (planting.individual_positions && planting.individual_positions.length > 0 && planting.individual_positions.length === planting.quantity) {
+          if (planting.individual_positions && planting.individual_positions.length > 0) {
             const gridPos = planting.individual_positions.map(pos => ({
               row: pos.y,
               col: pos.x,
             }))
             updated.set(planting.id, gridPos)
-          } else if (existing && existing.length !== planting.quantity) {
-            const newGrid = createOptimalGrid(planting.quantity)
-            updated.set(planting.id, newGrid)
           } else if (!existing) {
             const initialGrid = createOptimalGrid(planting.quantity)
             updated.set(planting.id, initialGrid)
@@ -176,7 +180,7 @@ export const GardenPlotVisual = ({ largeur, longueur, plantings, plants, onOverl
         })
       return updated
     })
-  }, [plantings])
+  }, [plantings, editingPlantingId])
 
   const [isSaving, setIsSaving] = useState(false)
 
@@ -198,7 +202,16 @@ export const GardenPlotVisual = ({ largeur, longueur, plantings, plants, onOverl
       }),
   })
 
-  const [editingPlantingId, setEditingPlantingId] = useState<string | null>(null)
+  const updateQuantityMutation = useMutation({
+    mutationFn: (data: { plantingId: string; quantity: number }) =>
+      updatePlantingQuantity(data.plantingId, {
+        quantity: data.quantity,
+      }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['plantings'] })
+    },
+  })
+
   const [draggedPlant, setDraggedPlant] = useState<string | null>(null)
   const [draggedGridIndex, setDraggedGridIndex] = useState<number | null>(null)
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 })
@@ -408,7 +421,27 @@ export const GardenPlotVisual = ({ largeur, longueur, plantings, plants, onOverl
     setEditingPlantingId(plantingId)
   }
 
-  const handleSaveEdit = () => {
+  const handleSaveEdit = async () => {
+    if (!editingPlantingId) return
+    
+    const gridPos = gridPositions.get(editingPlantingId)
+    const position = positions.find(p => p.planting_id === editingPlantingId)
+    
+    if (gridPos && position) {
+      const individualPositions = gridPos.map(pos => ({
+        x: pos.col,
+        y: pos.row,
+      }))
+      
+      await savePositionsMutation.mutateAsync({
+        plantingId: editingPlantingId,
+        position_x: Math.round(position.x),
+        position_y: Math.round(position.y),
+        individual_positions: individualPositions,
+        rotation: rotations.get(editingPlantingId),
+      })
+    }
+    
     setEditingPlantingId(null)
   }
 
@@ -1246,7 +1279,7 @@ export const GardenPlotVisual = ({ largeur, longueur, plantings, plants, onOverl
             <div className="mb-4">
               <div className="text-sm text-gray-500 mb-1">{editingPlant.plant.famille_plante}</div>
               <h3 className="text-xl font-bold text-gray-900">
-                Arrange {editingPlant.plant.titre_plante} (×{editingPlant.planting.quantity})
+                Arrange {editingPlant.plant.titre_plante} (×{gridPositions.get(editingPlantingId)?.length || editingPlant.planting.quantity})
               </h3>
               <p className="text-sm text-gray-600">Drag plants to create your desired layout. Plants must touch each other.</p>
             </div>
@@ -1309,19 +1342,64 @@ export const GardenPlotVisual = ({ largeur, longueur, plantings, plants, onOverl
               })()}
             </div>
 
-            <div className="flex gap-3 justify-end">
-              <button
-                onClick={handleCancelEdit}
-                className="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-md"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleSaveEdit}
-                className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md"
-              >
-                Save Layout
-              </button>
+            <div className="flex gap-3 justify-between">
+              <div className="flex gap-2">
+                <button
+                  onClick={() => {
+                    if (!editingPlantingId) return
+                    const currentGrid = gridPositions.get(editingPlantingId) || []
+                    const newQuantity = currentGrid.length + 1
+                    const maxRow = Math.max(...currentGrid.map(p => p.row), -1)
+                    setGridPositions(prev => {
+                      const updated = new Map(prev)
+                      const grid = [...currentGrid]
+                      grid.push({ row: maxRow + 1, col: 0 })
+                      updated.set(editingPlantingId, grid)
+                      return updated
+                    })
+                    updateQuantityMutation.mutate({ plantingId: editingPlantingId, quantity: newQuantity })
+                  }}
+                  className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md"
+                >
+                  + Add Plant
+                </button>
+                {gridPositions.get(editingPlantingId)?.length && gridPositions.get(editingPlantingId)!.length > 1 && (
+                  <button
+                    onClick={() => {
+                      if (!editingPlantingId) return
+                      const currentGrid = gridPositions.get(editingPlantingId) || []
+                      if (currentGrid.length > 1) {
+                        const newQuantity = currentGrid.length - 1
+                        setGridPositions(prev => {
+                          const updated = new Map(prev)
+                          const grid = [...currentGrid]
+                          grid.pop()
+                          updated.set(editingPlantingId, grid)
+                          return updated
+                        })
+                        updateQuantityMutation.mutate({ plantingId: editingPlantingId, quantity: newQuantity })
+                      }
+                    }}
+                    className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-md"
+                  >
+                    - Remove Plant
+                  </button>
+                )}
+              </div>
+              <div className="flex gap-3">
+                <button
+                  onClick={handleCancelEdit}
+                  className="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-md"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleSaveEdit}
+                  className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md"
+                >
+                  Save Layout
+                </button>
+              </div>
             </div>
           </div>
         </div>
