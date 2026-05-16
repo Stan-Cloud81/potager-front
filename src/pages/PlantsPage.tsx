@@ -83,23 +83,21 @@ export const PlantsPage = () => {
     <Layout>
       <div>
         <div className="mb-6">
-          <div className="flex justify-between items-center mb-4">
-            <h1 className="text-3xl font-bold text-gray-900">Plants</h1>
-            <div className="flex gap-4 items-center flex-1 max-w-2xl ml-8">
-              <input
-                type="text"
-                placeholder="Search plants by name..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="flex-1 px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-green-500 focus:border-green-500"
-              />
-              <button
-                onClick={() => setShowFilters(!showFilters)}
-                className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md text-sm font-medium"
-              >
-                {showFilters ? 'Hide Filters' : 'Show Filters'}
-              </button>
-            </div>
+          <h1 className="text-3xl font-bold text-gray-900 mb-4">Plants</h1>
+          <div className="flex gap-4 items-center">
+            <input
+              type="text"
+              placeholder="Search plants by name..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="flex-1 px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-green-500 focus:border-green-500"
+            />
+            <button
+              onClick={() => setShowFilters(!showFilters)}
+              className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md text-sm font-medium"
+            >
+              {showFilters ? 'Hide Filters' : 'Show Filters'}
+            </button>
           </div>
 
           {showFilters && (
