@@ -215,8 +215,8 @@ export const GardenPlotDetailPage = () => {
               >
                 <div className="relative">
                   <PlantImage 
-                    plantId={plant.id}
-                    alt={plant.name}
+                    imageUrl={plant.url_image_principale}
+                    alt={plant.titre_plante || plant.name || ''}
                     className="w-full h-40 object-contain bg-gray-50"
                   />
                   <button
@@ -235,8 +235,9 @@ export const GardenPlotDetailPage = () => {
                 <div className="p-6">
                   <div className="flex justify-between items-start mb-3">
                     <div className="flex-1">
+                      <div className="text-xs text-gray-500 mb-1">{plant.famille_plante}</div>
                       <h3 className="text-xl font-bold text-gray-900">
-                        {plant.name} - {plant.variety}
+                        {plant.titre_plante}
                       </h3>
                       <div className="flex items-center gap-2 mt-1">
                         <button
@@ -399,8 +400,8 @@ export const GardenPlotDetailPage = () => {
                     >
                       <div className="relative">
                         <PlantImage 
-                          plantId={plant.id}
-                          alt={plant.name}
+                          imageUrl={plant.url_image_principale}
+                          alt={plant.titre_plante || plant.name || ''}
                           className="w-full h-40 object-contain bg-gray-50"
                         />
                         <button
@@ -419,8 +420,9 @@ export const GardenPlotDetailPage = () => {
                       <div className="p-6">
                         <div className="flex justify-between items-start mb-3">
                           <div className="flex-1">
+                            <div className="text-xs text-gray-500 mb-1">{plant.famille_plante}</div>
                             <h3 className="text-xl font-bold text-gray-900">
-                              {plant.name} - {plant.variety}
+                              {plant.titre_plante}
                             </h3>
                             <div className="flex items-center gap-2 mt-1">
                               <span className="text-sm font-medium text-gray-700">Qty: {planting.quantity}</span>
@@ -524,7 +526,7 @@ export const GardenPlotDetailPage = () => {
                       <option value="">Choose a plant...</option>
                       {plants?.plants?.map((plant) => (
                         <option key={plant.id} value={plant.id}>
-                          {plant.name} - {plant.variety} ({plant.type})
+                          {plant.famille_plante} - {plant.titre_plante}
                         </option>
                       ))}
                     </select>
@@ -626,13 +628,13 @@ export const GardenPlotDetailPage = () => {
                   <div className="flex justify-between items-start mb-4">
                     <div className="flex gap-4 items-start flex-1">
                       <PlantImage 
-                        plantId={plant.id}
-                        alt={plant.name}
+                        imageUrl={plant.url_image_principale}
+                        alt={plant.titre_plante || plant.name || ''}
                         className="w-24 h-24 object-contain bg-gray-50 rounded-lg"
                       />
                       <div>
-                        <h2 className="text-2xl font-bold text-gray-900">{plant.name}</h2>
-                        <p className="text-gray-600">{plant.variety}</p>
+                        <div className="text-sm text-gray-500 mb-1">{plant.famille_plante}</div>
+                        <h2 className="text-2xl font-bold text-gray-900">{plant.titre_plante}</h2>
                       </div>
                     </div>
                     <button

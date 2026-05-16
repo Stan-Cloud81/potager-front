@@ -551,8 +551,8 @@ export const PlantsPage = () => {
               <div key={plant.id} className="bg-white shadow-md rounded-lg overflow-hidden">
                 <div className="relative">
                   <PlantImage 
-                    plantId={plant.id}
-                    alt={plant.name}
+                    imageUrl={plant.url_image_principale}
+                    alt={plant.titre_plante || plant.name || ''}
                     className="w-full h-40 object-contain bg-gray-50"
                   />
                   <div className="absolute top-2 left-2 flex gap-2">
@@ -585,9 +585,12 @@ export const PlantsPage = () => {
                   </div>
                 </div>
                 <div className="p-6">
-                  <h3 className="text-xl font-semibold text-gray-900 mb-4 h-14 line-clamp-2">
-                    {plant.name} - {plant.variety}
-                  </h3>
+                  <div className="mb-4 h-14">
+                    <div className="text-xs text-gray-500 mb-1">{plant.famille_plante}</div>
+                    <h3 className="text-xl font-semibold text-gray-900 line-clamp-2">
+                      {plant.titre_plante}
+                    </h3>
+                  </div>
                   <div className="space-y-3 mb-4">
                     <MonthIndicator label="Seedling" months={plant.planting_months} color="green" />
                     <MonthIndicator label="Harvest" months={plant.harvested_months} color="red" />
@@ -684,13 +687,13 @@ export const PlantsPage = () => {
                   <div className="flex justify-between items-start mb-4">
                     <div className="flex gap-4 items-start flex-1">
                       <PlantImage 
-                        plantId={plant.id}
-                        alt={plant.name}
+                        imageUrl={plant.url_image_principale}
+                        alt={plant.titre_plante || plant.name || ''}
                         className="w-24 h-24 object-contain bg-gray-50 rounded-lg"
                       />
                       <div>
-                        <h2 className="text-2xl font-bold text-gray-900">{plant.name}</h2>
-                        <p className="text-gray-600">{plant.variety}</p>
+                        <div className="text-sm text-gray-500 mb-1">{plant.famille_plante}</div>
+                        <h2 className="text-2xl font-bold text-gray-900">{plant.titre_plante}</h2>
                       </div>
                     </div>
                     <button

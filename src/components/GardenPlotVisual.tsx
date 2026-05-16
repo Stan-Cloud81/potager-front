@@ -819,8 +819,8 @@ export const GardenPlotVisual = ({ plotWidth, plotLength, plantings, plants, onO
                       }}
                     >
                       <PlantImage
-                        plantId={dp.plant.id}
-                        alt={dp.plant.name}
+                        imageUrl={dp.plant.url_image_principale}
+                        alt={dp.plant.titre_plante || dp.plant.name || ''}
                         className="rounded-full flex-shrink-0"
                         style={{
                           width: `${baseHeight * scale * 0.4}px`,
@@ -829,8 +829,11 @@ export const GardenPlotVisual = ({ plotWidth, plotLength, plantings, plants, onO
                         }}
                       />
                       <div className="text-center flex-shrink min-w-0" style={{ maxWidth: '100%' }}>
+                        <div className="text-gray-500 truncate leading-tight" style={{ fontSize: '7px' }}>
+                          {dp.plant.famille_plante}
+                        </div>
                         <div className="font-bold truncate leading-tight" style={{ fontSize: '9px' }}>
-                          {dp.plant.name}{dp.plant.variety ? ` - ${dp.plant.variety}` : ''}
+                          {dp.plant.titre_plante}
                         </div>
                         <div className="font-semibold leading-tight" style={{ fontSize: '8px' }}>
                           ×{dp.planting.quantity}
@@ -969,7 +972,8 @@ export const GardenPlotVisual = ({ plotWidth, plotLength, plantings, plants, onO
                     onDoubleClick={() => handleDoubleClick(dp.planting.id)}
                   >
                     <div className="text-center">
-                      <div>{dp.plant.name}</div>
+                      <div style={{ fontSize: '8px' }} className="text-gray-500">{dp.plant.famille_plante}</div>
+                      <div>{dp.plant.titre_plante}</div>
                       <div className="text-xs">×{dp.planting.quantity}</div>
                       {isModified && (
                         <div className={isUndersized ? 'text-amber-700' : 'text-blue-700'} style={{ fontSize: '8px' }}>
@@ -1092,8 +1096,8 @@ export const GardenPlotVisual = ({ plotWidth, plotLength, plantings, plants, onO
                   >
                     <div className="flex items-center gap-2">
                       <PlantImage
-                        plantId={plant.id}
-                        alt={plant.name}
+                        imageUrl={plant.url_image_principale}
+                        alt={plant.titre_plante || plant.name || ''}
                         className="w-12 h-12 object-contain rounded flex-shrink-0"
                       />
                       <div className="flex-1 min-w-0">
@@ -1128,8 +1132,9 @@ export const GardenPlotVisual = ({ plotWidth, plotLength, plantings, plants, onO
             onClick={(e) => e.stopPropagation()}
           >
             <div className="mb-4">
+              <div className="text-sm text-gray-500 mb-1">{editingPlant.plant.famille_plante}</div>
               <h3 className="text-xl font-bold text-gray-900">
-                Arrange {editingPlant.plant.name} (×{editingPlant.planting.quantity})
+                Arrange {editingPlant.plant.titre_plante} (×{editingPlant.planting.quantity})
               </h3>
               <p className="text-sm text-gray-600">Drag plants to create your desired layout. Plants must touch each other.</p>
             </div>
