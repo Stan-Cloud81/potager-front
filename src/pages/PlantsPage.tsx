@@ -431,7 +431,7 @@ export const PlantsPage = () => {
                   </button>
                 </div>
                 <div className="p-6">
-                  <h3 className="text-xl font-semibold text-gray-900 mb-4">
+                  <h3 className="text-xl font-semibold text-gray-900 mb-4 h-14 line-clamp-2">
                     {plant.name} - {plant.variety}
                   </h3>
                   <div className="space-y-3 mb-4">
