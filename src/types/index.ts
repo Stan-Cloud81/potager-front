@@ -8,7 +8,7 @@ export type PlantDetails = {
 export type Plant = {
   id: string
   url?: string
-  categories?: string[]
+  category?: string
   famille_plante?: string
   titre_plante?: string
   url_image_principale?: string

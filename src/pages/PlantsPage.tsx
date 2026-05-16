@@ -598,7 +598,7 @@ export const PlantsPage = () => {
                   <div className="space-y-2 text-sm">
                     <div className="flex justify-between">
                       <span className="text-gray-600">Type:</span>
-                      <span className="font-medium">{plant.categories?.join(', ') || plant.type || <span className="text-gray-400 italic">Not Set</span>}</span>
+                      <span className="font-medium">{plant.category || plant.type || <span className="text-gray-400 italic">Not Set</span>}</span>
                     </div>
                     {plant.details?.culture?.culture && (
                       <div className="flex justify-between">
@@ -650,9 +650,35 @@ export const PlantsPage = () => {
                       </div>
                     )}
                     {plant.details?.culture?.exposition && (
-                      <div className="flex justify-between">
+                      <div className="flex justify-between items-center">
                         <span className="text-gray-600">Exposition:</span>
-                        <span className="font-medium capitalize">{Array.isArray(plant.details.culture.exposition) ? (plant.details.culture.exposition as string[]).join(', ') : plant.details.culture.exposition}</span>
+                        <div className="flex gap-1">
+                          {(() => {
+                            const expositions = Array.isArray(plant.details.culture.exposition) 
+                              ? plant.details.culture.exposition as string[]
+                              : [plant.details.culture.exposition as string];
+                            
+                            const expositionOrder = [
+                              { key: 'plein soleil', icon: '/icons/plein-soleil.png' },
+                              { key: 'ensoleillée', icon: '/icons/ensoleillee.png' },
+                              { key: 'mi-ombre', icon: '/icons/mi-ombre.png' },
+                              { key: 'ombre', icon: '/icons/ombre.png' }
+                            ];
+                            
+                            const normalizedExpositions = expositions.map(e => e.toLowerCase());
+                            
+                            return expositionOrder
+                              .filter(({ key }) => normalizedExpositions.includes(key))
+                              .map(({ key, icon }, idx) => (
+                                <div key={idx} className="relative group">
+                                  <img src={icon} alt={key} className="w-6 h-6" />
+                                  <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 px-2 py-1 text-xs text-white bg-gray-900 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-10">
+                                    {key}
+                                  </span>
+                                </div>
+                              ));
+                          })()}
+                        </div>
                       </div>
                     )}
                     {plant.details?.culture?.nature_du_sol && (
@@ -782,7 +808,7 @@ export const PlantsPage = () => {
                       <div className="text-gray-900 space-y-2 text-sm">
                         <div className="flex justify-between">
                           <span className="text-gray-600">Type:</span>
-                          <span className="font-medium">{plant.categories?.join(', ') || plant.type}</span>
+                          <span className="font-medium">{plant.category || plant.type}</span>
                         </div>
                         {plant.details?.culture?.culture && (
                           <div className="flex justify-between">
@@ -803,9 +829,35 @@ export const PlantsPage = () => {
                           </div>
                         )}
                         {plant.details?.culture?.exposition && (
-                          <div className="flex justify-between">
+                          <div className="flex justify-between items-center">
                             <span className="text-gray-600">Exposition:</span>
-                            <span className="font-medium">{Array.isArray(plant.details.culture.exposition) ? (plant.details.culture.exposition as string[]).join(', ') : plant.details.culture.exposition}</span>
+                            <div className="flex gap-1">
+                              {(() => {
+                                const expositions = Array.isArray(plant.details.culture.exposition) 
+                                  ? plant.details.culture.exposition as string[]
+                                  : [plant.details.culture.exposition as string];
+                                
+                                const expositionOrder = [
+                                  { key: 'plein soleil', icon: '/icons/plein-soleil.png' },
+                                  { key: 'ensoleillée', icon: '/icons/ensoleillee.png' },
+                                  { key: 'mi-ombre', icon: '/icons/mi-ombre.png' },
+                                  { key: 'ombre', icon: '/icons/ombre.png' }
+                                ];
+                                
+                                const normalizedExpositions = expositions.map(e => e.toLowerCase());
+                                
+                                return expositionOrder
+                                  .filter(({ key }) => normalizedExpositions.includes(key))
+                                  .map(({ key, icon }, idx) => (
+                                    <div key={idx} className="relative group">
+                                      <img src={icon} alt={key} className="w-6 h-6" />
+                                      <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 px-2 py-1 text-xs text-white bg-gray-900 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-10">
+                                        {key}
+                                      </span>
+                                    </div>
+                                  ));
+                              })()}
+                            </div>
                           </div>
                         )}
                         {plant.details?.culture?.nature_du_sol && (
