@@ -50,8 +50,7 @@ export const Layout = ({ children }: LayoutProps) => {
                 </Link>
               </div>
             </div>
-            <div className="flex items-center gap-4 relative">
-              <LanguageSwitcher />
+            <div className="flex items-center relative">
               <button
                 onClick={() => setShowUserDropdown(!showUserDropdown)}
                 className="flex items-center gap-2 hover:bg-green-700 px-3 py-2 rounded-md"
@@ -75,6 +74,9 @@ export const Layout = ({ children }: LayoutProps) => {
               </button>
               {showUserDropdown && (
                 <div className="absolute right-0 top-full mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-10">
+                  <div className="border-b border-gray-200 pb-1 mb-1">
+                    <LanguageSwitcher />
+                  </div>
                   <button
                     onClick={() => {
                       handleLogout()

@@ -4,27 +4,25 @@ export const LanguageSwitcher = () => {
   const { language, setLanguage } = useLanguage()
 
   return (
-    <div className="flex items-center gap-2">
+    <>
       <button
         onClick={() => setLanguage('en')}
-        className={`px-3 py-1 rounded text-sm font-medium transition-colors ${
-          language === 'en'
-            ? 'bg-green-600 text-white'
-            : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+        className={`flex items-center gap-2 w-full text-left px-4 py-2 text-sm hover:bg-gray-100 ${
+          language === 'en' ? 'bg-gray-50 font-medium' : 'text-gray-700'
         }`}
       >
-        EN
+        <span className="text-lg">🇬🇧</span>
+        English
       </button>
       <button
         onClick={() => setLanguage('fr')}
-        className={`px-3 py-1 rounded text-sm font-medium transition-colors ${
-          language === 'fr'
-            ? 'bg-green-600 text-white'
-            : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+        className={`flex items-center gap-2 w-full text-left px-4 py-2 text-sm hover:bg-gray-100 ${
+          language === 'fr' ? 'bg-gray-50 font-medium' : 'text-gray-700'
         }`}
       >
-        FR
+        <span className="text-lg">🇫🇷</span>
+        Français
       </button>
-    </div>
+    </>
   )
 }
