@@ -1,4 +1,4 @@
-import { Planting, CreatePlantingRequest, UpdatePlantingStatusRequest, UpdatePlantingQuantityRequest, UpdatePlantingPositionRequest, UpdatePlantingSizeRequest } from "../types"
+import { Planting, CreatePlantingRequest, UpdatePlantingRequest, UpdatePlantingStatusRequest, UpdatePlantingQuantityRequest, UpdatePlantingPositionRequest, UpdatePlantingSizeRequest } from "../types"
 import { apiRequest } from "./client"
 
 export const getPlantings = async (): Promise<Planting[]> => {
@@ -12,9 +12,9 @@ export const createPlanting = async (data: CreatePlantingRequest): Promise<Plant
   })
 }
 
-export const updatePlantingStatus = async (
+export const updatePlanting = async (
   id: string,
-  data: UpdatePlantingStatusRequest
+  data: UpdatePlantingRequest
 ): Promise<Planting> => {
   return apiRequest<Planting>(`/plantings/${id}`, {
     method: "PATCH",
@@ -22,14 +22,18 @@ export const updatePlantingStatus = async (
   })
 }
 
+export const updatePlantingStatus = async (
+  id: string,
+  data: UpdatePlantingStatusRequest
+): Promise<Planting> => {
+  return updatePlanting(id, data)
+}
+
 export const updatePlantingQuantity = async (
   id: string,
   data: UpdatePlantingQuantityRequest
 ): Promise<Planting> => {
-  return apiRequest<Planting>(`/plantings/${id}/quantity`, {
-    method: "PATCH",
-    body: JSON.stringify(data),
-  })
+  return updatePlanting(id, data)
 }
 
 export const deletePlanting = async (id: string): Promise<void> => {
@@ -42,18 +46,12 @@ export const updatePlantingPosition = async (
   plantingId: string,
   data: UpdatePlantingPositionRequest
 ): Promise<void> => {
-  return apiRequest<void>(`/plantings/${plantingId}/position`, {
-    method: "PATCH",
-    body: JSON.stringify(data),
-  })
+  await updatePlanting(plantingId, data)
 }
 
 export const updatePlantingSize = async (
   plantingId: string,
   data: UpdatePlantingSizeRequest
 ): Promise<void> => {
-  return apiRequest<void>(`/plantings/${plantingId}/size`, {
-    method: "PATCH",
-    body: JSON.stringify(data),
-  })
+  await updatePlanting(plantingId, data)
 }

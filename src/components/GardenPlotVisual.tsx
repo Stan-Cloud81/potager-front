@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react'
 import { Plant, Planting } from '../types'
-import { updatePlantingPosition, updatePlantingSize, updatePlantingQuantity } from '../api/plantings'
+import { updatePlanting, updatePlantingPosition, updatePlantingSize, updatePlantingQuantity } from '../api/plantings'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { PlantImage } from './PlantImage'
 
@@ -17,7 +17,6 @@ type GardenPlotVisualProps = {
   plantings: Planting[]
   plants: Plant[]
   onOverlapChange?: (hasOverlap: boolean) => void
-  onPlantingStatusChange?: (plantingId: string, status: 'planted') => void
 }
 
 type DraggablePlant = {
@@ -53,7 +52,7 @@ const createOptimalGrid = (quantity: number): GridPosition[] => {
   return grid
 }
 
-export const GardenPlotVisual = ({ largeur, longueur, plantings, plants, onOverlapChange, onPlantingStatusChange }: GardenPlotVisualProps) => {
+export const GardenPlotVisual = ({ largeur, longueur, plantings, plants, onOverlapChange }: GardenPlotVisualProps) => {
   const queryClient = useQueryClient()
   const [windowWidth, setWindowWidth] = useState(typeof window !== 'undefined' ? window.innerWidth : 1024)
   const [windowHeight, setWindowHeight] = useState(typeof window !== 'undefined' ? window.innerHeight : 768)
@@ -184,21 +183,25 @@ export const GardenPlotVisual = ({ largeur, longueur, plantings, plants, onOverl
 
   const [isSaving, setIsSaving] = useState(false)
 
-  const savePositionsMutation = useMutation({
-    mutationFn: (data: { plantingId: string; position_x: number; position_y: number; individual_positions?: { x: number; y: number }[]; rotation?: number }) =>
-      updatePlantingPosition(data.plantingId, {
+  const saveLayoutMutation = useMutation({
+    mutationFn: (data: { 
+      plantingId: string; 
+      position_x: number; 
+      position_y: number; 
+      width_factor: number; 
+      length_factor: number;
+      individual_positions?: { x: number; y: number }[]; 
+      rotation?: number;
+      status?: 'planted';
+    }) =>
+      updatePlanting(data.plantingId, {
         position_x: data.position_x,
         position_y: data.position_y,
-        individual_positions: data.individual_positions,
-        rotation: data.rotation,
-      }),
-  })
-
-  const saveSizeMutation = useMutation({
-    mutationFn: (data: { plantingId: string; width_factor: number; length_factor: number }) =>
-      updatePlantingSize(data.plantingId, {
         width_factor: data.width_factor,
         length_factor: data.length_factor,
+        individual_positions: data.individual_positions,
+        rotation: data.rotation,
+        status: data.status,
       }),
   })
 
@@ -433,13 +436,14 @@ export const GardenPlotVisual = ({ largeur, longueur, plantings, plants, onOverl
         y: pos.row,
       }))
       
-      await savePositionsMutation.mutateAsync({
-        plantingId: editingPlantingId,
+      await updatePlanting(editingPlantingId, {
         position_x: Math.round(position.x),
         position_y: Math.round(position.y),
         individual_positions: individualPositions,
         rotation: rotations.get(editingPlantingId),
       })
+      
+      queryClient.invalidateQueries({ queryKey: ['plantings'] })
     }
     
     setEditingPlantingId(null)
@@ -451,32 +455,23 @@ export const GardenPlotVisual = ({ largeur, longueur, plantings, plants, onOverl
     try {
       for (const position of positions) {
         const planting = plantings.find(p => p.id === position.planting_id)
-        if (planting?.status === 'planned' && onPlantingStatusChange) {
-          onPlantingStatusChange(position.planting_id, 'planted')
-        }
-
+        const factors = sizeFactors.get(position.planting_id) || { width_factor: 1, length_factor: 1 }
         const gridPos = gridPositions.get(position.planting_id)
         const individualPositions = gridPos?.map(pos => ({
           x: pos.col,
           y: pos.row,
         }))
 
-        await savePositionsMutation.mutateAsync({
+        await saveLayoutMutation.mutateAsync({
           plantingId: position.planting_id,
           position_x: Math.round(position.x),
           position_y: Math.round(position.y),
+          width_factor: factors.width_factor,
+          length_factor: factors.length_factor,
           individual_positions: individualPositions && individualPositions.length > 0 ? individualPositions : undefined,
           rotation: rotations.get(position.planting_id),
+          status: planting?.status === 'planned' ? 'planted' : undefined,
         })
-
-        const factors = sizeFactors.get(position.planting_id)
-        if (factors) {
-          await saveSizeMutation.mutateAsync({
-            plantingId: position.planting_id,
-            width_factor: factors.width_factor,
-            length_factor: factors.length_factor,
-          })
-        }
       }
     } finally {
       setIsSaving(false)

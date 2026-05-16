@@ -192,9 +192,6 @@ export const GardenPlotDetailPage = () => {
               plantings={activePlantings}
               plants={plantQueries.data}
               onOverlapChange={setHasOverlap}
-              onPlantingStatusChange={(plantingId, status) => {
-                updateStatusMutation.mutate({ id: plantingId, status })
-              }}
             />
           </div>
         )}

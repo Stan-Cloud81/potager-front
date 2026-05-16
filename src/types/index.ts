@@ -93,6 +93,17 @@ export type CreatePlantingRequest = {
   quantity: number
 }
 
+export type UpdatePlantingRequest = {
+  status?: "planned" | "planted" | "harvested"
+  quantity?: number
+  position_x?: number
+  position_y?: number
+  individual_positions?: { x: number; y: number }[]
+  rotation?: number
+  width_factor?: number
+  length_factor?: number
+}
+
 export type UpdatePlantingStatusRequest = {
   status: "planned" | "planted" | "harvested"
 }
