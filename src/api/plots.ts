@@ -25,3 +25,10 @@ export const createPlot = async (data: CreateGardenPlotRequest): Promise<GardenP
     body: JSON.stringify(data),
   })
 }
+
+export const updatePlot = async (id: string, data: Partial<CreateGardenPlotRequest>): Promise<GardenPlot> => {
+  return apiRequest<GardenPlot>(`/plots/${id}`, {
+    method: "PATCH",
+    body: JSON.stringify(data),
+  })
+}

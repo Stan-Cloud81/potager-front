@@ -1,7 +1,7 @@
 import { useState, FormEvent } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { getPlot } from '../api/plots'
+import { getPlot, updatePlot } from '../api/plots'
 import { getPlantings, createPlanting, updatePlantingStatus, updatePlantingQuantity, deletePlanting } from '../api/plantings'
 import { getPlants, getPlant, getPlantDetails } from '../api/plants'
 import { Layout } from '../components/Layout'
@@ -26,6 +26,14 @@ export const GardenPlotDetailPage = () => {
   const [plantingToDelete, setPlantingToDelete] = useState<string | null>(null)
   const [hasOverlap, setHasOverlap] = useState(false)
   const [showHarvested, setShowHarvested] = useState(false)
+  const [showEditForm, setShowEditForm] = useState(false)
+  const [editFormData, setEditFormData] = useState<{
+    nom: string
+    largeur: number
+    longueur: number
+    nature_du_sol: 'bruyère' | 'argileux' | 'terreau' | 'calcaire' | 'littoral' | 'caillouteux' | 'humifère'
+    exposition: 'plein soleil' | 'ensoleillée' | 'mi-ombre' | 'ombre'
+  }>({ nom: '', largeur: 0, longueur: 0, nature_du_sol: 'terreau', exposition: 'plein soleil' })
 
   const { data: plot, isLoading: plotLoading } = useQuery({
     queryKey: ['plot', id],
@@ -86,6 +94,15 @@ export const GardenPlotDetailPage = () => {
       queryClient.invalidateQueries({ queryKey: ['plantings'] })
       setShowDeleteConfirm(false)
       setPlantingToDelete(null)
+    },
+  })
+
+  const updatePlotMutation = useMutation({
+    mutationFn: ({ id, data }: { id: string; data: Partial<typeof editFormData> }) =>
+      updatePlot(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['plot', id] })
+      setShowEditForm(false)
     },
   })
 
@@ -164,14 +181,32 @@ export const GardenPlotDetailPage = () => {
           >
             ← Back to Plots
           </button>
-          <div className="flex justify-between items-start">
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900">{plot.nom}</h1>
-              <p className="text-gray-600 mt-1">
-                {(plot.largeur / 100).toFixed(2)}m × {(plot.longueur / 100).toFixed(2)}m ({((plot.largeur / 100) * (plot.longueur / 100)).toFixed(2)} m²) • 
-                {' '}{plot.nature_du_sol} • {plot.exposition}
-              </p>
+          <div className="group">
+            <div className="inline-flex items-center gap-2">
+              <h1 className="text-3xl font-bold text-gray-900">{plot.nom.charAt(0).toUpperCase() + plot.nom.slice(1)}</h1>
+              <button
+                onClick={() => {
+                  setEditFormData({
+                    nom: plot.nom,
+                    largeur: plot.largeur,
+                    longueur: plot.longueur,
+                    nature_du_sol: plot.nature_du_sol,
+                    exposition: plot.exposition,
+                  })
+                  setShowEditForm(true)
+                }}
+                className="opacity-0 group-hover:opacity-100 transition-opacity text-gray-400 hover:text-gray-600 p-1 border border-gray-300 rounded hover:border-gray-400"
+                title="Edit plot details"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                  <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
+                </svg>
+              </button>
             </div>
+            <p className="text-gray-600 mt-1">
+              {(plot.largeur / 100).toFixed(2)}m × {(plot.longueur / 100).toFixed(2)}m ({((plot.largeur / 100) * (plot.longueur / 100)).toFixed(2)} m²) • 
+              {' '}{plot.nature_du_sol} • {plot.exposition}
+            </p>
           </div>
         </div>
 
@@ -493,7 +528,7 @@ export const GardenPlotDetailPage = () => {
             <div className="bg-white rounded-lg shadow-xl max-w-md w-full max-h-[90vh] overflow-y-auto">
               <div className="p-6">
                 <div className="flex justify-between items-center mb-4">
-                  <h2 className="text-2xl font-bold text-gray-900">Add Plant to {plot.nom}</h2>
+                  <h2 className="text-2xl font-bold text-gray-900">Add Plant to {plot.nom.charAt(0).toUpperCase() + plot.nom.slice(1)}</h2>
                   <button
                     onClick={() => setShowForm(false)}
                     className="text-gray-400 hover:text-gray-600 text-2xl"
@@ -737,6 +772,125 @@ export const GardenPlotDetailPage = () => {
                 >
                   {deleteMutation.isPending ? 'Deleting...' : 'Delete'}
                 </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {showEditForm && plot && (
+          <div className="fixed inset-0 flex items-center justify-center p-4 z-50" style={{ background: 'rgba(0, 0, 0, 0.3)' }}>
+            <div className="bg-white rounded-lg shadow-xl max-w-md w-full max-h-[90vh] overflow-y-auto">
+              <div className="p-6">
+                <div className="flex justify-between items-center mb-4">
+                  <h2 className="text-2xl font-bold text-gray-900">Edit Plot Details</h2>
+                  <button
+                    onClick={() => setShowEditForm(false)}
+                    className="text-gray-400 hover:text-gray-600 text-2xl"
+                  >
+                    ×
+                  </button>
+                </div>
+                <form onSubmit={(e) => {
+                  e.preventDefault()
+                  updatePlotMutation.mutate({ id: plot.id, data: editFormData })
+                }} className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Name
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      value={editFormData.nom}
+                      onChange={(e) => setEditFormData({ ...editFormData, nom: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-green-500 focus:border-green-500"
+                    />
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Width (m)
+                      </label>
+                      <input
+                        type="number"
+                        required
+                        min="0.1"
+                        step="0.1"
+                        value={editFormData.largeur ? editFormData.largeur / 100 : ''}
+                        onChange={(e) => setEditFormData({ ...editFormData, largeur: (parseFloat(e.target.value) || 0) * 100 })}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-green-500 focus:border-green-500"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Length (m)
+                      </label>
+                      <input
+                        type="number"
+                        required
+                        min="0.1"
+                        step="0.1"
+                        value={editFormData.longueur ? editFormData.longueur / 100 : ''}
+                        onChange={(e) => setEditFormData({ ...editFormData, longueur: (parseFloat(e.target.value) || 0) * 100 })}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-green-500 focus:border-green-500"
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Soil Type
+                    </label>
+                    <select
+                      value={editFormData.nature_du_sol}
+                      onChange={(e) => setEditFormData({ ...editFormData, nature_du_sol: e.target.value as typeof editFormData.nature_du_sol })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-green-500 focus:border-green-500"
+                    >
+                      <option value="bruyère">Bruyère</option>
+                      <option value="argileux">Argileux</option>
+                      <option value="terreau">Terreau</option>
+                      <option value="calcaire">Calcaire</option>
+                      <option value="littoral">Littoral</option>
+                      <option value="caillouteux">Caillouteux</option>
+                      <option value="humifère">Humifère</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Sunlight Exposure
+                    </label>
+                    <select
+                      value={editFormData.exposition}
+                      onChange={(e) => setEditFormData({ ...editFormData, exposition: e.target.value as typeof editFormData.exposition })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-green-500 focus:border-green-500"
+                    >
+                      <option value="plein soleil">Plein soleil</option>
+                      <option value="ensoleillée">Ensoleillée</option>
+                      <option value="mi-ombre">Mi-ombre</option>
+                      <option value="ombre">Ombre</option>
+                    </select>
+                  </div>
+                  {updatePlotMutation.isError && (
+                    <div className="text-red-600 text-sm">
+                      {updatePlotMutation.error.message}
+                    </div>
+                  )}
+                  <div className="flex gap-3">
+                    <button
+                      type="button"
+                      onClick={() => setShowEditForm(false)}
+                      className="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-800 px-4 py-2 rounded-md font-medium"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="submit"
+                      disabled={updatePlotMutation.isPending}
+                      className="flex-1 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md font-medium disabled:opacity-50"
+                    >
+                      {updatePlotMutation.isPending ? 'Saving...' : 'Save'}
+                    </button>
+                  </div>
+                </form>
               </div>
             </div>
           </div>

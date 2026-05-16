@@ -108,7 +108,7 @@ export const GardenPlotsPage = () => {
                 >
                   <div className="p-6">
                     <h3 className="text-2xl font-bold text-gray-900 mb-4">
-                      {plot.nom}
+                      {plot.nom.charAt(0).toUpperCase() + plot.nom.slice(1)}
                     </h3>
                     <div className="space-y-3">
                       <div className="flex items-center justify-between bg-green-50 p-3 rounded-lg">
