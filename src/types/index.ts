@@ -1,17 +1,37 @@
+export type PlantDetails = {
+  culture?: Record<string, unknown>
+  caracteristiques?: Record<string, unknown>
+  origin?: Record<string, unknown>
+  utilisation?: Record<string, unknown>
+}
+
 export type Plant = {
   id: string
-  name: string
-  type: "vegetable" | "fruit"
-  variety: string
-  planting_months: number[]
-  harvested_months: number[]
-  harvest_time_days: number
-  watering_frequency: "low" | "medium" | "high"
-  sunlight_requirement: "low" | "partial" | "full"
-  spacing_between_plants: number
-  spacing_between_rows: number
+  url?: string
+  categories?: string[]
+  famille_plante?: string
+  titre_plante?: string
+  url_image_principale?: string
+  images_galerie?: string[]
+  images_attributs?: string[]
+  description_html?: string
+  sections_description?: Array<{ type: string; content: string }>
+  nom_scientifique?: string
+  plantes_associes?: string[]
+  distance_par_plante?: number
+  distance_par_range?: number
+  details?: PlantDetails
+  name?: string
+  type?: "vegetable" | "fruit"
+  variety?: string
+  planting_months?: number[]
+  harvested_months?: number[]
+  harvest_time_days?: number
+  watering_frequency?: "low" | "medium" | "high"
+  sunlight_requirement?: "low" | "partial" | "full"
+  spacing_between_plants?: number
+  spacing_between_rows?: number
   days_to_maturity_text?: string
-  details?: string[]
   germination_temperature?: string
   growing_method?: string
   hybrid_status?: string
