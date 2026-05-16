@@ -12,6 +12,7 @@ export const GardenPlotsPage = () => {
   const [showForm, setShowForm] = useState(false)
   const [formData, setFormData] = useState<CreateGardenPlotRequest>({
     nom: '',
+    name: '',
     largeur: 0,
     longueur: 0,
     nature_du_sol: 'terreau',
@@ -42,6 +43,7 @@ export const GardenPlotsPage = () => {
       setShowForm(false)
       setFormData({
         nom: '',
+        name: '',
         largeur: 0,
         longueur: 0,
         nature_du_sol: 'terreau',

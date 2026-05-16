@@ -43,6 +43,7 @@ export type Plant = {
 export type GardenPlot = {
   id: string
   nom: string
+  name: string
   largeur: number
   longueur: number
   nature_du_sol: "bruyère" | "argileux" | "terreau" | "calcaire" | "littoral" | "caillouteux" | "humifère"

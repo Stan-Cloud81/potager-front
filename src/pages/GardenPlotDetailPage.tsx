@@ -340,10 +340,10 @@ export const GardenPlotDetailPage = () => {
                         <span className="font-medium">{plant.famille_plante}</span>
                       </div>
                     )}
-                    {plant.details?.culture?.besoin_en_eau && (
+                    {!!plant.details?.culture?.besoin_en_eau && (
                       <div className="flex justify-between">
                         <span className="text-gray-600">Besoin en eau:</span>
-                        <span className="font-medium capitalize">{plant.details.culture.besoin_en_eau}</span>
+                        <span className="font-medium capitalize">{String(plant.details.culture.besoin_en_eau)}</span>
                       </div>
                     )}
                     {(plant.distance_par_plante || plant.spacing_between_plants) && (

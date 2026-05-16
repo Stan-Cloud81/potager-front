@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react'
 import { Plant, Planting } from '../types'
-import { updatePlanting, updatePlantingPosition, updatePlantingSize, updatePlantingQuantity } from '../api/plantings'
+import { updatePlanting, updatePlantingQuantity } from '../api/plantings'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { PlantImage } from './PlantImage'
 
@@ -242,7 +242,6 @@ export const GardenPlotVisual = ({ largeur, longueur, plantings, plants, onOverl
     const minRow = Math.min(...gridPos.map(p => p.row))
     const maxRow = Math.max(...gridPos.map(p => p.row))
     const minCol = Math.min(...gridPos.map(p => p.col))
-    const maxCol = Math.max(...gridPos.map(p => p.col))
     
     const normalizedRot = rotation % 4
     

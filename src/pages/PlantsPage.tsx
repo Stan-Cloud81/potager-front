@@ -600,10 +600,10 @@ export const PlantsPage = () => {
                       <span className="text-gray-600">Type:</span>
                       <span className="font-medium">{plant.category || plant.type || <span className="text-gray-400 italic">Not Set</span>}</span>
                     </div>
-                    {plant.details?.culture?.culture && (
+                    {!!plant.details?.culture?.culture && (
                       <div className="flex justify-between">
                         <span className="text-gray-600">Culture:</span>
-                        <span className="font-medium">{Array.isArray(plant.details.culture.culture) ? (plant.details.culture.culture as string[]).join(', ') : plant.details.culture.culture}</span>
+                        <span className="font-medium">{Array.isArray(plant.details.culture.culture) ? (plant.details.culture.culture as string[]).join(', ') : String(plant.details.culture.culture)}</span>
                       </div>
                     )}
                     {(() => {
@@ -643,20 +643,20 @@ export const PlantsPage = () => {
                       
                       return null;
                     })()}
-                    {plant.details?.culture?.besoin_en_eau && (
+                    {!!plant.details?.culture?.besoin_en_eau && (
                       <div className="flex justify-between">
                         <span className="text-gray-600">Besoin en eau:</span>
-                        <span className="font-medium capitalize">{plant.details.culture.besoin_en_eau as string}</span>
+                        <span className="font-medium capitalize">{String(plant.details.culture.besoin_en_eau)}</span>
                       </div>
                     )}
-                    {plant.details?.culture?.exposition && (
+                    {!!plant.details?.culture?.exposition && (
                       <div className="flex justify-between items-center">
                         <span className="text-gray-600">Exposition:</span>
                         <div className="flex gap-1">
                           {(() => {
                             const expositions = Array.isArray(plant.details.culture.exposition) 
                               ? plant.details.culture.exposition as string[]
-                              : [plant.details.culture.exposition as string];
+                              : [String(plant.details.culture.exposition)];
                             
                             const expositionOrder = [
                               { key: 'plein soleil', icon: '/icons/plein-soleil.png' },
@@ -681,14 +681,14 @@ export const PlantsPage = () => {
                         </div>
                       </div>
                     )}
-                    {plant.details?.culture?.nature_du_sol && (
+                    {!!plant.details?.culture?.nature_du_sol && (
                       <div className="flex justify-between items-center">
                         <span className="text-gray-600">Nature du sol:</span>
                         <div className="flex gap-1">
                           {(() => {
-                            const soilTypes = Array.isArray(plant.details.culture.nature_du_sol) 
+                            const soilTypes = Array.isArray(plant.details.culture.nature_du_sol)
                               ? plant.details.culture.nature_du_sol as string[]
-                              : [plant.details.culture.nature_du_sol as string];
+                              : [String(plant.details.culture.nature_du_sol)];
                             
                             const soilTypeOrder = [
                               { key: 'bruyère', icon: '/icons/bruyere.png' },
@@ -840,25 +840,25 @@ export const PlantsPage = () => {
                           <span className="text-gray-600">Type:</span>
                           <span className="font-medium">{plant.category || plant.type}</span>
                         </div>
-                        {plant.details?.culture?.culture && (
+                        {!!plant.details?.culture?.culture && (
                           <div className="flex justify-between">
                             <span className="text-gray-600">Culture:</span>
-                            <span className="font-medium">{Array.isArray(plant.details.culture.culture) ? (plant.details.culture.culture as string[]).join(', ') : plant.details.culture.culture}</span>
+                            <span className="font-medium">{Array.isArray(plant.details.culture.culture) ? (plant.details.culture.culture as string[]).join(', ') : String(plant.details.culture.culture)}</span>
                           </div>
                         )}
-                        {plant.details?.caracteristiques?.taille_des_plants_min && plant.details?.caracteristiques?.taille_des_plants_max && (
+                        {!!plant.details?.caracteristiques?.taille_des_plants_min && !!plant.details?.caracteristiques?.taille_des_plants_max && (
                           <div className="flex justify-between">
                             <span className="text-gray-600">Harvest Time:</span>
-                            <span className="font-medium">{plant.details.caracteristiques.taille_des_plants_min} - {plant.details.caracteristiques.taille_des_plants_max} cm</span>
+                            <span className="font-medium">{String(plant.details.caracteristiques.taille_des_plants_min)} - {String(plant.details.caracteristiques.taille_des_plants_max)} cm</span>
                           </div>
                         )}
-                        {plant.details?.culture?.besoin_en_eau && (
+                        {!!plant.details?.culture?.besoin_en_eau && (
                           <div className="flex justify-between">
                             <span className="text-gray-600">Besoin en eau:</span>
-                            <span className="font-medium capitalize">{plant.details.culture.besoin_en_eau as string}</span>
+                            <span className="font-medium capitalize">{String(plant.details.culture.besoin_en_eau)}</span>
                           </div>
                         )}
-                        {plant.details?.culture?.exposition && (
+                        {!!plant.details?.culture?.exposition && (
                           <div className="flex justify-between items-center">
                             <span className="text-gray-600">Exposition:</span>
                             <div className="flex gap-1">
@@ -890,14 +890,14 @@ export const PlantsPage = () => {
                             </div>
                           </div>
                         )}
-                        {plant.details?.culture?.nature_du_sol && (
+                        {!!plant.details?.culture?.nature_du_sol && (
                           <div className="flex justify-between items-center">
                             <span className="text-gray-600">Nature du sol:</span>
                             <div className="flex gap-1">
                               {(() => {
-                                const soilTypes = Array.isArray(plant.details.culture.nature_du_sol) 
+                                const soilTypes = Array.isArray(plant.details.culture.nature_du_sol)
                                   ? plant.details.culture.nature_du_sol as string[]
-                                  : [plant.details.culture.nature_du_sol as string];
+                                  : [String(plant.details.culture.nature_du_sol)];
                                 
                                 const soilTypeOrder = [
                                   { key: 'bruyère', icon: '/icons/bruyere.png' },
@@ -940,13 +940,13 @@ export const PlantsPage = () => {
                         )}
                       </div>
                     </div>
-                    {plant.details?.utilisation?.usage && (
+                    {!!plant.details?.utilisation?.usage && (
                       <div className="border-b pb-4">
                         <div className="text-sm font-semibold text-gray-600 uppercase mb-3">
                           Usage
                         </div>
                         <div className="text-gray-900 text-sm">
-                          {plant.details.utilisation.usage as string}
+                          {String(plant.details.utilisation.usage)}
                         </div>
                       </div>
                     )}
@@ -1333,11 +1333,11 @@ export const PlantsPage = () => {
                       </div>
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">Planting Months * (comma-separated)</label>
-                        <input type="text" name="planting_months" required defaultValue={plant.planting_months.join(',')} placeholder="e.g., 3,4,5" className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-green-500 focus:border-green-500" />
+                        <input type="text" name="planting_months" required defaultValue={plant.planting_months?.join(',') || ''} placeholder="e.g., 3,4,5" className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-green-500 focus:border-green-500" />
                       </div>
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">Harvested Months * (comma-separated)</label>
-                        <input type="text" name="harvested_months" required defaultValue={plant.harvested_months.join(',')} placeholder="e.g., 7,8,9" className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-green-500 focus:border-green-500" />
+                        <input type="text" name="harvested_months" required defaultValue={plant.harvested_months?.join(',') || ''} placeholder="e.g., 7,8,9" className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-green-500 focus:border-green-500" />
                       </div>
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">Harvest Time (days) *</label>
