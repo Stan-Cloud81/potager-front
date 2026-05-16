@@ -590,45 +590,51 @@ export const GardenPlotVisual = ({ plotWidth, plotLength, plantings, plants, onO
     ? draggablePlants.find(dp => dp.planting.id === editingPlantingId)
     : null
 
-  if (onOverlapChange) {
-    onOverlapChange(anyOverlap)
-  }
+  useEffect(() => {
+    if (onOverlapChange) {
+      onOverlapChange(anyOverlap)
+    }
+  }, [anyOverlap, onOverlapChange])
 
   const handleSidebarDragStart = (e: React.DragEvent, plantingId: string) => {
     setDraggedFromSidebar(plantingId)
     e.dataTransfer.effectAllowed = 'move'
+    e.dataTransfer.setData('text/plain', plantingId)
   }
 
   const handlePlotDragOver = (e: React.DragEvent) => {
-    if (draggedFromSidebar) {
-      e.preventDefault()
-      e.dataTransfer.dropEffect = 'move'
-    }
+    e.preventDefault()
+    e.dataTransfer.dropEffect = 'move'
   }
 
   const handlePlotDrop = (e: React.DragEvent) => {
-    if (!draggedFromSidebar || !containerRef.current) return
     e.preventDefault()
+    
+    const plantingId = e.dataTransfer.getData('text/plain') || draggedFromSidebar
+    if (!plantingId || !containerRef.current) {
+      setDraggedFromSidebar(null)
+      return
+    }
 
     const rect = containerRef.current.getBoundingClientRect()
     const x = Math.round((e.clientX - rect.left) / scale / 5) * 5
     const y = Math.round((e.clientY - rect.top) / scale / 5) * 5
 
-    const planting = plantings.find(p => p.id === draggedFromSidebar)
+    const planting = plantings.find(p => p.id === plantingId)
     
     setPositions(prev => {
-      const existing = prev.find(p => p.planting_id === draggedFromSidebar)
+      const existing = prev.find(p => p.planting_id === plantingId)
       if (existing) {
-        return prev.map(p => p.planting_id === draggedFromSidebar ? { ...p, x, y } : p)
+        return prev.map(p => p.planting_id === plantingId ? { ...p, x, y } : p)
       } else {
-        return [...prev, { planting_id: draggedFromSidebar, x, y }]
+        return [...prev, { planting_id: plantingId, x, y }]
       }
     })
 
-    if (planting && !sizeFactors.has(draggedFromSidebar)) {
+    if (planting && !sizeFactors.has(plantingId)) {
       setSizeFactors(prev => {
         const updated = new Map(prev)
-        updated.set(draggedFromSidebar, {
+        updated.set(plantingId, {
           width_factor: planting.width_factor ?? 1,
           length_factor: planting.length_factor ?? 1,
         })
@@ -636,12 +642,12 @@ export const GardenPlotVisual = ({ plotWidth, plotLength, plantings, plants, onO
       })
     }
 
-    if (planting && !gridPositions.has(draggedFromSidebar)) {
+    if (planting && !gridPositions.has(plantingId)) {
       const initialGrid: GridPosition[] = []
       for (let i = 0; i < planting.quantity; i++) {
         initialGrid.push({ row: 0, col: i })
       }
-      setGridPositions(prev => new Map(prev).set(draggedFromSidebar, initialGrid))
+      setGridPositions(prev => new Map(prev).set(plantingId, initialGrid))
     }
 
     setDraggedFromSidebar(null)
