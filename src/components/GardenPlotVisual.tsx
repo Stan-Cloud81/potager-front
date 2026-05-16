@@ -39,6 +39,20 @@ type SizeFactor = {
 const MAX_HEIGHT = 600
 const EDIT_CELL_SIZE = 60
 
+const createOptimalGrid = (quantity: number): GridPosition[] => {
+  const cols = Math.ceil(Math.sqrt(quantity))
+  const grid: GridPosition[] = []
+  
+  for (let i = 0; i < quantity; i++) {
+    grid.push({
+      row: Math.floor(i / cols),
+      col: i % cols
+    })
+  }
+  
+  return grid
+}
+
 export const GardenPlotVisual = ({ largeur, longueur, plantings, plants, onOverlapChange, onPlantingStatusChange }: GardenPlotVisualProps) => {
   const [windowWidth, setWindowWidth] = useState(typeof window !== 'undefined' ? window.innerWidth : 1024)
   const [windowHeight, setWindowHeight] = useState(typeof window !== 'undefined' ? window.innerHeight : 768)
@@ -104,10 +118,7 @@ export const GardenPlotVisual = ({ largeur, longueur, plantings, plants, onOverl
           }))
           initialGridPositions.set(planting.id, gridPos)
         } else {
-          const initialGrid: GridPosition[] = []
-          for (let i = 0; i < planting.quantity; i++) {
-            initialGrid.push({ row: 0, col: i })
-          }
+          const initialGrid = createOptimalGrid(planting.quantity)
           initialGridPositions.set(planting.id, initialGrid)
         }
       })
@@ -156,16 +167,10 @@ export const GardenPlotVisual = ({ largeur, longueur, plantings, plants, onOverl
             }))
             updated.set(planting.id, gridPos)
           } else if (existing && existing.length !== planting.quantity) {
-            const newGrid: GridPosition[] = []
-            for (let i = 0; i < planting.quantity; i++) {
-              newGrid.push({ row: 0, col: i })
-            }
+            const newGrid = createOptimalGrid(planting.quantity)
             updated.set(planting.id, newGrid)
           } else if (!existing) {
-            const initialGrid: GridPosition[] = []
-            for (let i = 0; i < planting.quantity; i++) {
-              initialGrid.push({ row: 0, col: i })
-            }
+            const initialGrid = createOptimalGrid(planting.quantity)
             updated.set(planting.id, initialGrid)
           }
         })
@@ -396,10 +401,7 @@ export const GardenPlotVisual = ({ largeur, longueur, plantings, plants, onOverl
 
     const existingGrid = gridPositions.get(plantingId)
     if (!existingGrid) {
-      const initialGrid: GridPosition[] = []
-      for (let i = 0; i < planting.quantity; i++) {
-        initialGrid.push({ row: 0, col: i })
-      }
+      const initialGrid = createOptimalGrid(planting.quantity)
       setGridPositions(new Map(gridPositions).set(plantingId, initialGrid))
     }
 
@@ -736,10 +738,7 @@ export const GardenPlotVisual = ({ largeur, longueur, plantings, plants, onOverl
     }
 
     if (planting && !gridPositions.has(plantingId)) {
-      const initialGrid: GridPosition[] = []
-      for (let i = 0; i < planting.quantity; i++) {
-        initialGrid.push({ row: 0, col: i })
-      }
+      const initialGrid = createOptimalGrid(planting.quantity)
       setGridPositions(prev => new Map(prev).set(plantingId, initialGrid))
     }
 
