@@ -64,3 +64,16 @@ export type UpdatePlantingStatusRequest = {
 export type UpdatePlantingQuantityRequest = {
   quantity: number
 }
+
+export type PlantPosition = {
+  planting_id: string
+  x: number
+  y: number
+}
+
+export type IndividualPlantPosition = {
+  planting_id: string
+  index: number
+  x: number
+  y: number
+}

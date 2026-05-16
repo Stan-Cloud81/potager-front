@@ -7,6 +7,7 @@ import { getPlants, getPlantDetails } from '../api/plants'
 import { Layout } from '../components/Layout'
 import { PlantImage } from '../components/PlantImage'
 import { MonthIndicator } from '../components/MonthIndicator'
+import { GardenPlotVisual } from '../components/GardenPlotVisual'
 import { formatDate } from '../utils/date'
 
 export const GardenPlotDetailPage = () => {
@@ -20,6 +21,7 @@ export const GardenPlotDetailPage = () => {
   const [selectedPlantForDetails, setSelectedPlantForDetails] = useState<string | null>(null)
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   const [plantingToDelete, setPlantingToDelete] = useState<string | null>(null)
+  const [hasOverlap, setHasOverlap] = useState(false)
 
   const { data: plot, isLoading: plotLoading } = useQuery({
     queryKey: ['plot', id],
@@ -149,6 +151,27 @@ export const GardenPlotDetailPage = () => {
           </div>
         </div>
 
+        {plants && plotPlantings.length > 0 && (
+          <div className="mb-8">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-2xl font-bold text-gray-900">Garden Layout</h2>
+              {hasOverlap && (
+                <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-2 rounded text-sm">
+                  ⚠️ Warning: Some plants are overlapping!
+                </div>
+              )}
+            </div>
+            <GardenPlotVisual
+              plotWidth={plot.width * 100}
+              plotLength={plot.length * 100}
+              plantings={plotPlantings}
+              plants={plants}
+              onOverlapChange={setHasOverlap}
+            />
+          </div>
+        )}
+
+        <h2 className="text-2xl font-bold text-gray-900 mb-4">Plants</h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-6">
           {plotPlantings.map((planting) => {
             const plant = getPlantInfo(planting.plant_id)
