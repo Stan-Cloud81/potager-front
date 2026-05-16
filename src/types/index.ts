@@ -7,6 +7,8 @@ export type Plant = {
   harvest_time_days: number
   watering_frequency: "low" | "medium" | "high"
   sunlight_requirement: "low" | "partial" | "full"
+  spacing_between_plants: number
+  spacing_between_rows: number
 }
 
 export type GardenPlot = {

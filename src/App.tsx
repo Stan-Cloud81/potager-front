@@ -4,7 +4,6 @@ import { RegisterPage } from './pages/RegisterPage'
 import { PlantsPage } from './pages/PlantsPage'
 import { GardenPlotsPage } from './pages/GardenPlotsPage'
 import { GardenPlotDetailPage } from './pages/GardenPlotDetailPage'
-import { PlantingsPage } from './pages/PlantingsPage'
 import { useAuth } from './hooks/useAuth'
 
 function PrivateRoute({ children }: { children: React.ReactNode }) {
@@ -39,14 +38,6 @@ function App() {
           element={
             <PrivateRoute>
               <GardenPlotDetailPage />
-            </PrivateRoute>
-          }
-        />
-        <Route
-          path="/plantings"
-          element={
-            <PrivateRoute>
-              <PlantingsPage />
             </PrivateRoute>
           }
         />

@@ -70,6 +70,14 @@ export const PlantsPage = () => {
                       <span className="text-gray-600">Sunlight:</span>
                       <span className="font-medium capitalize">{plant.sunlight_requirement}</span>
                     </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Spacing:</span>
+                      <span className="font-medium">{plant.spacing_between_plants}cm</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Row Spacing:</span>
+                      <span className="font-medium">{plant.spacing_between_rows}cm</span>
+                    </div>
                   </div>
                 </div>
               </div>

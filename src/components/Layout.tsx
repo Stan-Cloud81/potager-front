@@ -36,12 +36,6 @@ export const Layout = ({ children }: LayoutProps) => {
                 >
                   Garden Plots
                 </Link>
-                <Link
-                  to="/plantings"
-                  className="inline-flex items-center px-1 pt-1 text-sm font-medium hover:text-green-200"
-                >
-                  Plantings
-                </Link>
               </div>
             </div>
             <div className="flex items-center">

@@ -166,6 +166,14 @@ export const GardenPlotDetailPage = () => {
                       <span className="text-gray-600">☀️ Sunlight:</span>
                       <span className="font-medium capitalize">{plant.sunlight_requirement}</span>
                     </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">📏 Spacing:</span>
+                      <span className="font-medium">{plant.spacing_between_plants}cm</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Row Spacing:</span>
+                      <span className="font-medium">{plant.spacing_between_rows}cm</span>
+                    </div>
                   </div>
 
                   <div className="border-t pt-3 space-y-1 text-sm">
@@ -262,6 +270,14 @@ export const GardenPlotDetailPage = () => {
                             <div className="flex justify-between">
                               <span>Harvest time:</span>
                               <span className="font-medium">{plant.harvest_time_days} days</span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span>Spacing:</span>
+                              <span className="font-medium">{plant.spacing_between_plants}cm</span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span>Row spacing:</span>
+                              <span className="font-medium">{plant.spacing_between_rows}cm</span>
                             </div>
                           </div>
                         )
