@@ -92,6 +92,36 @@ export const GardenPlotVisual = ({ plotId, plotWidth, plotLength, plantings, pla
     return initialGridPositions
   })
 
+  useEffect(() => {
+    setGridPositions(prev => {
+      const updated = new Map(prev)
+      plantings.forEach((planting) => {
+        const existing = updated.get(planting.id)
+        
+        if (planting.individual_positions && planting.individual_positions.length > 0 && planting.individual_positions.length === planting.quantity) {
+          const gridPos = planting.individual_positions.map(pos => ({
+            row: pos.y,
+            col: pos.x,
+          }))
+          updated.set(planting.id, gridPos)
+        } else if (existing && existing.length !== planting.quantity) {
+          const newGrid: GridPosition[] = []
+          for (let i = 0; i < planting.quantity; i++) {
+            newGrid.push({ row: 0, col: i })
+          }
+          updated.set(planting.id, newGrid)
+        } else if (!existing) {
+          const initialGrid: GridPosition[] = []
+          for (let i = 0; i < planting.quantity; i++) {
+            initialGrid.push({ row: 0, col: i })
+          }
+          updated.set(planting.id, initialGrid)
+        }
+      })
+      return updated
+    })
+  }, [plantings])
+
   const getOriginalPosition = (x: number, y: number, width: number, height: number) => {
     if (isRotated) {
       return {
