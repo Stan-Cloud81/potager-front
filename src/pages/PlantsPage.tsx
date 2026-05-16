@@ -19,12 +19,15 @@ export const PlantsPage = () => {
   const [showFilters, setShowFilters] = useState(false)
   const [page, setPage] = useState(1)
   const [limit] = useState(50)
+  const [showTypeDropdown, setShowTypeDropdown] = useState(false)
+  const [showWateringDropdown, setShowWateringDropdown] = useState(false)
+  const [showSunlightDropdown, setShowSunlightDropdown] = useState(false)
   const [filters, setFilters] = useState({
-    type: '',
-    planting_months: 0,
-    harvested_months: 0,
-    watering_frequency: '',
-    sunlight_requirement: '',
+    type: [] as string[],
+    planting_months: [] as number[],
+    harvested_months: [] as number[],
+    watering_frequency: [] as string[],
+    sunlight_requirement: [] as string[],
     spacing_between_plants_min: 0,
     spacing_between_plants_max: 100,
     spacing_between_rows_min: 0,
@@ -49,11 +52,11 @@ export const PlantsPage = () => {
 
   const activeFilters = {
     search: searchQuery || undefined,
-    type: filters.type || undefined,
-    planting_months: filters.planting_months || undefined,
-    harvested_months: filters.harvested_months || undefined,
-    watering_frequency: filters.watering_frequency || undefined,
-    sunlight_requirement: filters.sunlight_requirement || undefined,
+    type: filters.type.length > 0 ? filters.type.join(',') : undefined,
+    planting_months: filters.planting_months.length > 0 ? filters.planting_months.join(',') : undefined,
+    harvested_months: filters.harvested_months.length > 0 ? filters.harvested_months.join(',') : undefined,
+    watering_frequency: filters.watering_frequency.length > 0 ? filters.watering_frequency.join(',') : undefined,
+    sunlight_requirement: filters.sunlight_requirement.length > 0 ? filters.sunlight_requirement.join(',') : undefined,
     spacing_between_plants: getSpacingFilter(filters.spacing_between_plants_min, filters.spacing_between_plants_max),
     spacing_between_rows: getSpacingFilter(filters.spacing_between_rows_min, filters.spacing_between_rows_max),
     page,
@@ -124,73 +127,158 @@ export const PlantsPage = () => {
           {showFilters && (
             <div className="bg-gray-50 rounded-lg p-6 space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                <div>
+                <div className="relative">
                   <label className="block text-sm font-medium text-gray-700 mb-1">Type</label>
-                  <select
-                    value={filters.type}
-                    onChange={(e) => handleFilterChange({ ...filters, type: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-green-500 focus:border-green-500"
+                  <button
+                    type="button"
+                    onClick={() => setShowTypeDropdown(!showTypeDropdown)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-green-500 focus:border-green-500 text-left bg-white relative"
                   >
-                    <option value="">All</option>
-                    <option value="vegetable">Vegetable</option>
-                    <option value="fruit">Fruit</option>
-                  </select>
+                    <span className="block pr-8">{filters.type.length === 0 ? 'All' : filters.type.map(t => t.charAt(0).toUpperCase() + t.slice(1)).join(', ')}</span>
+                    <svg className="w-4 h-4 text-gray-500 absolute right-2 top-1/2 -translate-y-1/2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </button>
+                  {showTypeDropdown && (
+                    <div className="absolute z-10 mt-1 w-full bg-white border border-gray-300 rounded-md shadow-lg">
+                      {['vegetable', 'fruit'].map((type) => (
+                        <label key={type} className="flex items-center px-3 py-2 hover:bg-gray-50 cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={filters.type.includes(type)}
+                            onChange={(e) => {
+                              const newTypes = e.target.checked
+                                ? [...filters.type, type]
+                                : filters.type.filter(t => t !== type)
+                              handleFilterChange({ ...filters, type: newTypes })
+                            }}
+                            className="mr-2"
+                          />
+                          <span className="capitalize">{type}</span>
+                        </label>
+                      ))}
+                    </div>
+                  )}
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Planting Month</label>
-                  <select
-                    value={filters.planting_months}
-                    onChange={(e) => handleFilterChange({ ...filters, planting_months: parseInt(e.target.value) })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-green-500 focus:border-green-500"
-                  >
-                    <option value="0">All</option>
-                    {['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'].map((month, i) => (
-                      <option key={i + 1} value={i + 1}>{month}</option>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Planting Months</label>
+                  <div className="flex gap-0.5 flex-wrap">
+                    {['J', 'F', 'M', 'A', 'M', 'J', 'J', 'A', 'S', 'O', 'N', 'D'].map((month, index) => (
+                      <button
+                        key={index}
+                        type="button"
+                        onClick={() => {
+                          const monthNum = index + 1
+                          const newMonths = filters.planting_months.includes(monthNum)
+                            ? filters.planting_months.filter(m => m !== monthNum)
+                            : [...filters.planting_months, monthNum]
+                          handleFilterChange({ ...filters, planting_months: newMonths })
+                        }}
+                        className={`w-8 h-8 rounded-full flex items-center justify-center text-[10px] font-medium ${
+                          filters.planting_months.includes(index + 1)
+                            ? 'bg-green-700 text-white'
+                            : 'bg-gray-200 text-gray-500 hover:bg-gray-300'
+                        }`}
+                      >
+                        {month}
+                      </button>
                     ))}
-                  </select>
+                  </div>
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Harvest Month</label>
-                  <select
-                    value={filters.harvested_months}
-                    onChange={(e) => handleFilterChange({ ...filters, harvested_months: parseInt(e.target.value) })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-green-500 focus:border-green-500"
-                  >
-                    <option value="0">All</option>
-                    {['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'].map((month, i) => (
-                      <option key={i + 1} value={i + 1}>{month}</option>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Harvest Months</label>
+                  <div className="flex gap-0.5 flex-wrap">
+                    {['J', 'F', 'M', 'A', 'M', 'J', 'J', 'A', 'S', 'O', 'N', 'D'].map((month, index) => (
+                      <button
+                        key={index}
+                        type="button"
+                        onClick={() => {
+                          const monthNum = index + 1
+                          const newMonths = filters.harvested_months.includes(monthNum)
+                            ? filters.harvested_months.filter(m => m !== monthNum)
+                            : [...filters.harvested_months, monthNum]
+                          handleFilterChange({ ...filters, harvested_months: newMonths })
+                        }}
+                        className={`w-8 h-8 rounded-full flex items-center justify-center text-[10px] font-medium ${
+                          filters.harvested_months.includes(index + 1)
+                            ? 'bg-red-700 text-white'
+                            : 'bg-gray-200 text-gray-500 hover:bg-gray-300'
+                        }`}
+                      >
+                        {month}
+                      </button>
                     ))}
-                  </select>
+                  </div>
                 </div>
 
-                <div>
+                <div className="relative">
                   <label className="block text-sm font-medium text-gray-700 mb-1">Watering Frequency</label>
-                  <select
-                    value={filters.watering_frequency}
-                    onChange={(e) => handleFilterChange({ ...filters, watering_frequency: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-green-500 focus:border-green-500"
+                  <button
+                    type="button"
+                    onClick={() => setShowWateringDropdown(!showWateringDropdown)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-green-500 focus:border-green-500 text-left bg-white relative"
                   >
-                    <option value="">All</option>
-                    <option value="low">Low</option>
-                    <option value="medium">Medium</option>
-                    <option value="high">High</option>
-                  </select>
+                    <span className="block pr-8">{filters.watering_frequency.length === 0 ? 'All' : filters.watering_frequency.map(f => f.charAt(0).toUpperCase() + f.slice(1)).join(', ')}</span>
+                    <svg className="w-4 h-4 text-gray-500 absolute right-2 top-1/2 -translate-y-1/2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </button>
+                  {showWateringDropdown && (
+                    <div className="absolute z-10 mt-1 w-full bg-white border border-gray-300 rounded-md shadow-lg">
+                      {['low', 'medium', 'high'].map((freq) => (
+                        <label key={freq} className="flex items-center px-3 py-2 hover:bg-gray-50 cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={filters.watering_frequency.includes(freq)}
+                            onChange={(e) => {
+                              const newFreqs = e.target.checked
+                                ? [...filters.watering_frequency, freq]
+                                : filters.watering_frequency.filter(f => f !== freq)
+                              handleFilterChange({ ...filters, watering_frequency: newFreqs })
+                            }}
+                            className="mr-2"
+                          />
+                          <span className="capitalize">{freq}</span>
+                        </label>
+                      ))}
+                    </div>
+                  )}
                 </div>
 
-                <div>
+                <div className="relative">
                   <label className="block text-sm font-medium text-gray-700 mb-1">Sunlight Requirement</label>
-                  <select
-                    value={filters.sunlight_requirement}
-                    onChange={(e) => handleFilterChange({ ...filters, sunlight_requirement: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-green-500 focus:border-green-500"
+                  <button
+                    type="button"
+                    onClick={() => setShowSunlightDropdown(!showSunlightDropdown)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-green-500 focus:border-green-500 text-left bg-white relative"
                   >
-                    <option value="">All</option>
-                    <option value="low">Low</option>
-                    <option value="partial">Partial</option>
-                    <option value="full">Full</option>
-                  </select>
+                    <span className="block pr-8">{filters.sunlight_requirement.length === 0 ? 'All' : filters.sunlight_requirement.map(s => s.charAt(0).toUpperCase() + s.slice(1)).join(', ')}</span>
+                    <svg className="w-4 h-4 text-gray-500 absolute right-2 top-1/2 -translate-y-1/2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </button>
+                  {showSunlightDropdown && (
+                    <div className="absolute z-10 mt-1 w-full bg-white border border-gray-300 rounded-md shadow-lg">
+                      {['low', 'partial', 'full'].map((sunlight) => (
+                        <label key={sunlight} className="flex items-center px-3 py-2 hover:bg-gray-50 cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={filters.sunlight_requirement.includes(sunlight)}
+                            onChange={(e) => {
+                              const newSunlight = e.target.checked
+                                ? [...filters.sunlight_requirement, sunlight]
+                                : filters.sunlight_requirement.filter(s => s !== sunlight)
+                              handleFilterChange({ ...filters, sunlight_requirement: newSunlight })
+                            }}
+                            className="mr-2"
+                          />
+                          <span className="capitalize">{sunlight}</span>
+                        </label>
+                      ))}
+                    </div>
+                  )}
                 </div>
               </div>
 
@@ -282,11 +370,11 @@ export const PlantsPage = () => {
 
               <button
                 onClick={() => handleFilterChange({
-                  type: '',
-                  planting_months: 0,
-                  harvested_months: 0,
-                  watering_frequency: '',
-                  sunlight_requirement: '',
+                  type: [],
+                  planting_months: [],
+                  harvested_months: [],
+                  watering_frequency: [],
+                  sunlight_requirement: [],
                   spacing_between_plants_min: 0,
                   spacing_between_plants_max: 100,
                   spacing_between_rows_min: 0,
