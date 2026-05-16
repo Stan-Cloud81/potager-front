@@ -383,18 +383,87 @@ export const GardenPlotVisual = ({ plotId, plotWidth, plotLength, plantings, pla
         <div className="mb-2 text-sm text-gray-600">
           Plot dimensions: {plotWidth}cm × {plotLength}cm{isRotated && ' (rotated for display)'}
         </div>
-        <div
-          ref={containerRef}
-          className="relative bg-amber-50 border-2 border-amber-900 rounded"
-          style={{
-            width: `${visualWidth}px`,
-            height: `${visualHeight}px`,
-            cursor: draggedPlant ? 'grabbing' : 'default',
-          }}
-          onMouseMove={handleMouseMove}
-          onMouseUp={handleMouseUp}
-          onMouseLeave={handleMouseUp}
-        >
+        <div className="relative inline-block">
+          <div style={{ 
+            position: 'relative',
+            padding: '14px',
+            width: `${visualWidth + 28}px`,
+            height: `${visualHeight + 28}px`,
+          }}>
+            {/* Corner posts */}
+            <div style={{ position: 'absolute', top: 0, left: 0, width: '14px', height: '14px', background: '#4A3C2A', zIndex: 2 }} />
+            <div style={{ position: 'absolute', top: 0, right: 0, width: '14px', height: '14px', background: '#4A3C2A', zIndex: 2 }} />
+            <div style={{ position: 'absolute', bottom: 0, left: 0, width: '14px', height: '14px', background: '#4A3C2A', zIndex: 2 }} />
+            <div style={{ position: 'absolute', bottom: 0, right: 0, width: '14px', height: '14px', background: '#4A3C2A', zIndex: 2 }} />
+          
+          {/* Top border */}
+          <div style={{
+            position: 'absolute',
+            top: 0,
+            left: '14px',
+            right: '14px',
+            height: '14px',
+            background: `repeating-linear-gradient(90deg, #4A3C2A 0px, #4A3C2A ${visualWidth / 14 * 0.2}px, #5D4E37 ${visualWidth / 14 * 0.2}px, #5D4E37 ${visualWidth / 14}px)`,
+            zIndex: 1
+          }} />
+          
+          {/* Bottom border */}
+          <div style={{
+            position: 'absolute',
+            bottom: 0,
+            left: '14px',
+            right: '14px',
+            height: '14px',
+            background: `repeating-linear-gradient(90deg, #4A3C2A 0px, #4A3C2A ${visualWidth / 14 * 0.2}px, #5D4E37 ${visualWidth / 14 * 0.2}px, #5D4E37 ${visualWidth / 14}px)`,
+            zIndex: 1
+          }} />
+          
+          {/* Left border */}
+          <div style={{
+            position: 'absolute',
+            left: 0,
+            top: '14px',
+            bottom: '14px',
+            width: '14px',
+            background: `repeating-linear-gradient(0deg, #4A3C2A 0px, #4A3C2A ${visualHeight / 14 * 0.25}px, #5D4E37 ${visualHeight / 14 * 0.25}px, #5D4E37 ${visualHeight / 14}px)`,
+            zIndex: 1
+          }} />
+          
+          {/* Right border */}
+          <div style={{
+            position: 'absolute',
+            right: 0,
+            top: '14px',
+            bottom: '14px',
+            width: '14px',
+            background: `repeating-linear-gradient(180deg, #4A3C2A 0px, #4A3C2A ${visualHeight / 14 * 0.25}px, #5D4E37 ${visualHeight / 14 * 0.25}px, #5D4E37 ${visualHeight / 14}px)`,
+            zIndex: 1
+          }} />
+          
+          <div
+            ref={containerRef}
+            className="relative shadow-lg"
+            style={{
+              width: `${visualWidth}px`,
+              height: `${visualHeight}px`,
+              cursor: draggedPlant ? 'grabbing' : 'default',
+              background: '#6B4423',
+              backgroundImage: `
+                radial-gradient(circle at 20% 30%, rgba(90, 60, 35, 0.3) 1px, transparent 1px),
+                radial-gradient(circle at 80% 70%, rgba(90, 60, 35, 0.3) 1px, transparent 1px),
+                radial-gradient(circle at 40% 80%, rgba(90, 60, 35, 0.4) 1px, transparent 1px),
+                radial-gradient(circle at 60% 20%, rgba(90, 60, 35, 0.3) 1px, transparent 1px),
+                linear-gradient(rgba(80, 50, 30, 0.1) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(80, 50, 30, 0.1) 1px, transparent 1px)
+              `,
+              backgroundSize: '40px 40px, 50px 50px, 45px 45px, 55px 55px, 20px 20px, 20px 20px',
+              backgroundPosition: '0 0, 10px 10px, 20px 20px, 30px 30px, 0 0, 0 0',
+              boxShadow: 'inset 0 0 20px rgba(0,0,0,0.3)',
+            }}
+            onMouseMove={handleMouseMove}
+            onMouseUp={handleMouseUp}
+            onMouseLeave={handleMouseUp}
+          >
           {draggablePlants.map(dp => {
             if (editingPlantingId === dp.planting.id) return null
 
@@ -514,6 +583,8 @@ export const GardenPlotVisual = ({ plotId, plotWidth, plotLength, plantings, pla
               </div>
             )
           })}
+          </div>
+          </div>
         </div>
       </div>
 
