@@ -70,59 +70,63 @@ export const GardenPlotVisual = ({ plotWidth, plotLength, plantings, plants, onO
   const visualHeight = displayHeight * scale
 
   const [positions, setPositions] = useState<PlantPosition[]>(() => {
-    return plantings.map((p, i) => ({
-      planting_id: p.id,
-      x: p.position_x !== undefined && p.position_x !== null 
-        ? p.position_x 
-        : Math.round((10 + (i % 3) * 30) / 5) * 5,
-      y: p.position_y !== undefined && p.position_y !== null 
-        ? p.position_y 
-        : Math.round((10 + Math.floor(i / 3) * 30) / 5) * 5,
-    }))
+    return plantings
+      .filter(p => p.position_x !== undefined && p.position_x !== null && p.position_y !== undefined && p.position_y !== null)
+      .map(p => ({
+        planting_id: p.id,
+        x: p.position_x!,
+        y: p.position_y!,
+      }))
   })
 
   const [sizeFactors, setSizeFactors] = useState<Map<string, SizeFactor>>(() => {
     const initial = new Map<string, SizeFactor>()
-    plantings.forEach((p) => {
-      initial.set(p.id, {
-        width_factor: p.width_factor ?? 1,
-        length_factor: p.length_factor ?? 1,
+    plantings
+      .filter(p => p.position_x !== undefined && p.position_x !== null && p.position_y !== undefined && p.position_y !== null)
+      .forEach((p) => {
+        initial.set(p.id, {
+          width_factor: p.width_factor ?? 1,
+          length_factor: p.length_factor ?? 1,
+        })
       })
-    })
     return initial
   })
 
   const [gridPositions, setGridPositions] = useState<Map<string, GridPosition[]>>(() => {
     const initialGridPositions = new Map<string, GridPosition[]>()
-    plantings.forEach((planting) => {
-      if (planting.individual_positions && planting.individual_positions.length > 0) {
-        const gridPos = planting.individual_positions.map(pos => ({
-          row: pos.y,
-          col: pos.x,
-        }))
-        initialGridPositions.set(planting.id, gridPos)
-      } else {
-        const initialGrid: GridPosition[] = []
-        for (let i = 0; i < planting.quantity; i++) {
-          initialGrid.push({ row: 0, col: i })
+    plantings
+      .filter(p => p.position_x !== undefined && p.position_x !== null && p.position_y !== undefined && p.position_y !== null)
+      .forEach((planting) => {
+        if (planting.individual_positions && planting.individual_positions.length > 0) {
+          const gridPos = planting.individual_positions.map(pos => ({
+            row: pos.y,
+            col: pos.x,
+          }))
+          initialGridPositions.set(planting.id, gridPos)
+        } else {
+          const initialGrid: GridPosition[] = []
+          for (let i = 0; i < planting.quantity; i++) {
+            initialGrid.push({ row: 0, col: i })
+          }
+          initialGridPositions.set(planting.id, initialGrid)
         }
-        initialGridPositions.set(planting.id, initialGrid)
-      }
-    })
+      })
     return initialGridPositions
   })
 
   useEffect(() => {
     setSizeFactors(prev => {
       const updated = new Map(prev)
-      plantings.forEach((p) => {
-        if (!updated.has(p.id)) {
-          updated.set(p.id, {
-            width_factor: p.width_factor ?? 1,
-            length_factor: p.length_factor ?? 1,
-          })
-        }
-      })
+      plantings
+        .filter(p => p.position_x !== undefined && p.position_x !== null && p.position_y !== undefined && p.position_y !== null)
+        .forEach((p) => {
+          if (!updated.has(p.id)) {
+            updated.set(p.id, {
+              width_factor: p.width_factor ?? 1,
+              length_factor: p.length_factor ?? 1,
+            })
+          }
+        })
       return updated
     })
   }, [plantings])
@@ -130,29 +134,31 @@ export const GardenPlotVisual = ({ plotWidth, plotLength, plantings, plants, onO
   useEffect(() => {
     setGridPositions(prev => {
       const updated = new Map(prev)
-      plantings.forEach((planting) => {
-        const existing = updated.get(planting.id)
-        
-        if (planting.individual_positions && planting.individual_positions.length > 0 && planting.individual_positions.length === planting.quantity) {
-          const gridPos = planting.individual_positions.map(pos => ({
-            row: pos.y,
-            col: pos.x,
-          }))
-          updated.set(planting.id, gridPos)
-        } else if (existing && existing.length !== planting.quantity) {
-          const newGrid: GridPosition[] = []
-          for (let i = 0; i < planting.quantity; i++) {
-            newGrid.push({ row: 0, col: i })
+      plantings
+        .filter(p => p.position_x !== undefined && p.position_x !== null && p.position_y !== undefined && p.position_y !== null)
+        .forEach((planting) => {
+          const existing = updated.get(planting.id)
+          
+          if (planting.individual_positions && planting.individual_positions.length > 0 && planting.individual_positions.length === planting.quantity) {
+            const gridPos = planting.individual_positions.map(pos => ({
+              row: pos.y,
+              col: pos.x,
+            }))
+            updated.set(planting.id, gridPos)
+          } else if (existing && existing.length !== planting.quantity) {
+            const newGrid: GridPosition[] = []
+            for (let i = 0; i < planting.quantity; i++) {
+              newGrid.push({ row: 0, col: i })
+            }
+            updated.set(planting.id, newGrid)
+          } else if (!existing) {
+            const initialGrid: GridPosition[] = []
+            for (let i = 0; i < planting.quantity; i++) {
+              initialGrid.push({ row: 0, col: i })
+            }
+            updated.set(planting.id, initialGrid)
           }
-          updated.set(planting.id, newGrid)
-        } else if (!existing) {
-          const initialGrid: GridPosition[] = []
-          for (let i = 0; i < planting.quantity; i++) {
-            initialGrid.push({ row: 0, col: i })
-          }
-          updated.set(planting.id, initialGrid)
-        }
-      })
+        })
       return updated
     })
   }, [plantings])
@@ -188,7 +194,7 @@ export const GardenPlotVisual = ({ plotWidth, plotLength, plantings, plants, onO
   const editContainerRef = useRef<HTMLDivElement>(null)
 
   const plantingsWithPositions = plantings.filter(p => 
-    p.status !== 'planned' && positions.some(pos => pos.planting_id === p.id)
+    positions.some(pos => pos.planting_id === p.id)
   )
   const plannedPlantings = plantings.filter(p => p.status === 'planned')
 
@@ -611,7 +617,10 @@ export const GardenPlotVisual = ({ plotWidth, plotLength, plantings, plants, onO
     e.preventDefault()
     
     const plantingId = e.dataTransfer.getData('text/plain') || draggedFromSidebar
+    console.log('Drop event:', { plantingId, draggedFromSidebar, hasContainer: !!containerRef.current })
+    
     if (!plantingId || !containerRef.current) {
+      console.log('Early return:', { plantingId, hasContainer: !!containerRef.current })
       setDraggedFromSidebar(null)
       return
     }
@@ -621,17 +630,20 @@ export const GardenPlotVisual = ({ plotWidth, plotLength, plantings, plants, onO
     const y = Math.round((e.clientY - rect.top) / scale / 5) * 5
 
     const planting = plantings.find(p => p.id === plantingId)
+    console.log('Found planting:', planting)
+    console.log('Position:', { x, y })
     
     setPositions(prev => {
       const existing = prev.find(p => p.planting_id === plantingId)
-      if (existing) {
-        return prev.map(p => p.planting_id === plantingId ? { ...p, x, y } : p)
-      } else {
-        return [...prev, { planting_id: plantingId, x, y }]
-      }
+      const newPositions = existing 
+        ? prev.map(p => p.planting_id === plantingId ? { ...p, x, y } : p)
+        : [...prev, { planting_id: plantingId, x, y }]
+      console.log('New positions:', newPositions)
+      return newPositions
     })
 
     if (planting && !sizeFactors.has(plantingId)) {
+      console.log('Setting size factors for', plantingId)
       setSizeFactors(prev => {
         const updated = new Map(prev)
         updated.set(plantingId, {
@@ -643,6 +655,7 @@ export const GardenPlotVisual = ({ plotWidth, plotLength, plantings, plants, onO
     }
 
     if (planting && !gridPositions.has(plantingId)) {
+      console.log('Setting grid positions for', plantingId)
       const initialGrid: GridPosition[] = []
       for (let i = 0; i < planting.quantity; i++) {
         initialGrid.push({ row: 0, col: i })
@@ -651,6 +664,7 @@ export const GardenPlotVisual = ({ plotWidth, plotLength, plantings, plants, onO
     }
 
     setDraggedFromSidebar(null)
+    console.log('Drop complete')
   }
 
   return (

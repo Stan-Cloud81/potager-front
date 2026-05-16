@@ -58,8 +58,13 @@ export const GardenPlotDetailPage = () => {
   })
 
   const updateStatusMutation = useMutation({
-    mutationFn: ({ id, status }: { id: string; status: 'planned' | 'planted' | 'harvested' }) =>
-      updatePlantingStatus(id, { status }),
+    mutationFn: async ({ id, status }: { id: string; status: 'planned' | 'planted' | 'harvested' }) => {
+      await updatePlantingStatus(id, { status })
+      if (status === 'planned') {
+        const { updatePlantingPosition } = await import('../api/plantings')
+        await updatePlantingPosition(id, { position_x: 0, position_y: 0, individual_positions: [] })
+      }
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['plantings'] })
     },
