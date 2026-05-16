@@ -63,6 +63,7 @@ export type Planting = {
   variety?: string
   width_factor?: number
   length_factor?: number
+  rotation?: number
 }
 
 export type LoginRequest = {
@@ -104,6 +105,7 @@ export type UpdatePlantingPositionRequest = {
   position_x: number
   position_y: number
   individual_positions?: { x: number; y: number }[]
+  rotation?: number
 }
 
 export type UpdatePlantingSizeRequest = {

@@ -114,6 +114,16 @@ export const GardenPlotVisual = ({ largeur, longueur, plantings, plants, onOverl
     return initialGridPositions
   })
 
+  const [rotations, setRotations] = useState<Map<string, number>>(() => {
+    const initial = new Map<string, number>()
+    plantings
+      .filter(p => p.position_x !== undefined && p.position_x !== null && p.position_y !== undefined && p.position_y !== null)
+      .forEach((p) => {
+        initial.set(p.id, p.rotation ?? 0)
+      })
+    return initial
+  })
+
   useEffect(() => {
     setSizeFactors(prev => {
       const updated = new Map(prev)
@@ -166,11 +176,12 @@ export const GardenPlotVisual = ({ largeur, longueur, plantings, plants, onOverl
   const [isSaving, setIsSaving] = useState(false)
 
   const savePositionsMutation = useMutation({
-    mutationFn: (data: { plantingId: string; position_x: number; position_y: number; individual_positions?: { x: number; y: number }[] }) =>
+    mutationFn: (data: { plantingId: string; position_x: number; position_y: number; individual_positions?: { x: number; y: number }[]; rotation?: number }) =>
       updatePlantingPosition(data.plantingId, {
         position_x: data.position_x,
         position_y: data.position_y,
         individual_positions: data.individual_positions,
+        rotation: data.rotation,
       }),
   })
 
@@ -204,19 +215,50 @@ export const GardenPlotVisual = ({ largeur, longueur, plantings, plants, onOverl
     return { planting, plant, position }
   }).filter(dp => dp.plant)
 
+  const rotateGridPositions = (gridPos: GridPosition[], rotation: number): GridPosition[] => {
+    if (!gridPos || gridPos.length === 0 || rotation === 0) return gridPos
+
+    const minRow = Math.min(...gridPos.map(p => p.row))
+    const maxRow = Math.max(...gridPos.map(p => p.row))
+    const minCol = Math.min(...gridPos.map(p => p.col))
+    const maxCol = Math.max(...gridPos.map(p => p.col))
+    
+    const normalizedRot = rotation % 4
+    
+    return gridPos.map(pos => {
+      let newRow = pos.row - minRow
+      let newCol = pos.col - minCol
+      
+      for (let i = 0; i < normalizedRot; i++) {
+        const temp = newRow
+        newRow = newCol
+        newCol = (maxRow - minRow) - temp
+      }
+      
+      return { row: newRow, col: newCol }
+    })
+  }
+
   const getPlantRect = (dp: DraggablePlant) => {
     const factors = sizeFactors.get(dp.planting.id) || { width_factor: 1, length_factor: 1 }
+    const rotation = rotations.get(dp.planting.id) ?? 0
     const plantSpacingBetweenPlants = dp.plant.spacing_between_plants ?? 30
     const plantSpacingBetweenRows = dp.plant.spacing_between_rows ?? 40
-    const baseWidth = (isRotated ? plantSpacingBetweenRows : plantSpacingBetweenPlants) * factors.width_factor
-    const baseHeight = (isRotated ? plantSpacingBetweenPlants : plantSpacingBetweenRows) * factors.length_factor
+    
+    let baseWidth = (isRotated ? plantSpacingBetweenRows : plantSpacingBetweenPlants) * factors.width_factor
+    let baseHeight = (isRotated ? plantSpacingBetweenPlants : plantSpacingBetweenRows) * factors.length_factor
+    
+    if (rotation % 2 === 1) {
+      [baseWidth, baseHeight] = [baseHeight, baseWidth]
+    }
 
     const gridPos = gridPositions.get(dp.planting.id)
     if (gridPos && gridPos.length > 0) {
-      const minRow = Math.min(...gridPos.map(p => p.row))
-      const maxRow = Math.max(...gridPos.map(p => p.row))
-      const minCol = Math.min(...gridPos.map(p => p.col))
-      const maxCol = Math.max(...gridPos.map(p => p.col))
+      const rotatedGrid = rotateGridPositions(gridPos, rotation)
+      const minRow = Math.min(...rotatedGrid.map(p => p.row))
+      const maxRow = Math.max(...rotatedGrid.map(p => p.row))
+      const minCol = Math.min(...rotatedGrid.map(p => p.col))
+      const maxCol = Math.max(...rotatedGrid.map(p => p.col))
 
       return {
         x: dp.position.x,
@@ -248,17 +290,24 @@ export const GardenPlotVisual = ({ largeur, longueur, plantings, plants, onOverl
     if (!currentPlant) return false
 
     const currentFactors = sizeFactors.get(plantingId) || { width_factor: 1, length_factor: 1 }
+    const currentRotation = rotations.get(plantingId) ?? 0
     const currentPlantSpacingBetweenPlants = currentPlant.plant.spacing_between_plants ?? 30
     const currentPlantSpacingBetweenRows = currentPlant.plant.spacing_between_rows ?? 40
-    const baseWidth = (isRotated ? currentPlantSpacingBetweenRows : currentPlantSpacingBetweenPlants) * currentFactors.width_factor
-    const baseHeight = (isRotated ? currentPlantSpacingBetweenPlants : currentPlantSpacingBetweenRows) * currentFactors.length_factor
+    let baseWidth = (isRotated ? currentPlantSpacingBetweenRows : currentPlantSpacingBetweenPlants) * currentFactors.width_factor
+    let baseHeight = (isRotated ? currentPlantSpacingBetweenPlants : currentPlantSpacingBetweenRows) * currentFactors.length_factor
+    
+    if (currentRotation % 2 === 1) {
+      [baseWidth, baseHeight] = [baseHeight, baseWidth]
+    }
+    
     const currentGridPos = gridPositions.get(plantingId)
 
     if (currentGridPos && currentGridPos.length > 0) {
-      const minRow = Math.min(...currentGridPos.map(p => p.row))
-      const minCol = Math.min(...currentGridPos.map(p => p.col))
+      const rotatedCurrentGrid = rotateGridPositions(currentGridPos, currentRotation)
+      const minRow = Math.min(...rotatedCurrentGrid.map(p => p.row))
+      const minCol = Math.min(...rotatedCurrentGrid.map(p => p.col))
 
-      const currentCells = currentGridPos.map(pos => ({
+      const currentCells = rotatedCurrentGrid.map(pos => ({
         x: currentPlant.position.x + (pos.col - minCol) * baseWidth,
         y: currentPlant.position.y + (pos.row - minRow) * baseHeight,
         width: baseWidth,
@@ -269,17 +318,24 @@ export const GardenPlotVisual = ({ largeur, longueur, plantings, plants, onOverl
         if (dp.planting.id === plantingId) return false
 
         const otherFactors = sizeFactors.get(dp.planting.id) || { width_factor: 1, length_factor: 1 }
+        const otherRotation = rotations.get(dp.planting.id) ?? 0
         const otherPlantSpacingBetweenPlants = dp.plant.spacing_between_plants ?? 30
         const otherPlantSpacingBetweenRows = dp.plant.spacing_between_rows ?? 40
-        const otherBaseWidth = (isRotated ? otherPlantSpacingBetweenRows : otherPlantSpacingBetweenPlants) * otherFactors.width_factor
-        const otherBaseHeight = (isRotated ? otherPlantSpacingBetweenPlants : otherPlantSpacingBetweenRows) * otherFactors.length_factor
+        let otherBaseWidth = (isRotated ? otherPlantSpacingBetweenRows : otherPlantSpacingBetweenPlants) * otherFactors.width_factor
+        let otherBaseHeight = (isRotated ? otherPlantSpacingBetweenPlants : otherPlantSpacingBetweenRows) * otherFactors.length_factor
+        
+        if (otherRotation % 2 === 1) {
+          [otherBaseWidth, otherBaseHeight] = [otherBaseHeight, otherBaseWidth]
+        }
+        
         const otherGridPos = gridPositions.get(dp.planting.id)
 
         if (otherGridPos && otherGridPos.length > 0) {
-          const otherMinRow = Math.min(...otherGridPos.map(p => p.row))
-          const otherMinCol = Math.min(...otherGridPos.map(p => p.col))
+          const rotatedOtherGrid = rotateGridPositions(otherGridPos, otherRotation)
+          const otherMinRow = Math.min(...rotatedOtherGrid.map(p => p.row))
+          const otherMinCol = Math.min(...rotatedOtherGrid.map(p => p.col))
 
-          const otherCells = otherGridPos.map(pos => ({
+          const otherCells = rotatedOtherGrid.map(pos => ({
             x: dp.position.x + (pos.col - otherMinCol) * otherBaseWidth,
             y: dp.position.y + (pos.row - otherMinRow) * otherBaseHeight,
             width: otherBaseWidth,
@@ -301,17 +357,24 @@ export const GardenPlotVisual = ({ largeur, longueur, plantings, plants, onOverl
         if (dp.planting.id === plantingId) return false
 
         const otherFactors = sizeFactors.get(dp.planting.id) || { width_factor: 1, length_factor: 1 }
+        const otherRotation = rotations.get(dp.planting.id) ?? 0
         const otherPlantSpacingBetweenPlants = dp.plant.spacing_between_plants ?? 30
         const otherPlantSpacingBetweenRows = dp.plant.spacing_between_rows ?? 40
-        const otherBaseWidth = (isRotated ? otherPlantSpacingBetweenRows : otherPlantSpacingBetweenPlants) * otherFactors.width_factor
-        const otherBaseHeight = (isRotated ? otherPlantSpacingBetweenPlants : otherPlantSpacingBetweenRows) * otherFactors.length_factor
+        let otherBaseWidth = (isRotated ? otherPlantSpacingBetweenRows : otherPlantSpacingBetweenPlants) * otherFactors.width_factor
+        let otherBaseHeight = (isRotated ? otherPlantSpacingBetweenPlants : otherPlantSpacingBetweenRows) * otherFactors.length_factor
+        
+        if (otherRotation % 2 === 1) {
+          [otherBaseWidth, otherBaseHeight] = [otherBaseHeight, otherBaseWidth]
+        }
+        
         const otherGridPos = gridPositions.get(dp.planting.id)
 
         if (otherGridPos && otherGridPos.length > 0) {
-          const otherMinRow = Math.min(...otherGridPos.map(p => p.row))
-          const otherMinCol = Math.min(...otherGridPos.map(p => p.col))
+          const rotatedOtherGrid = rotateGridPositions(otherGridPos, otherRotation)
+          const otherMinRow = Math.min(...rotatedOtherGrid.map(p => p.row))
+          const otherMinCol = Math.min(...rotatedOtherGrid.map(p => p.col))
 
-          const otherCells = otherGridPos.map(pos => ({
+          const otherCells = rotatedOtherGrid.map(pos => ({
             x: dp.position.x + (pos.col - otherMinCol) * otherBaseWidth,
             y: dp.position.y + (pos.row - otherMinRow) * otherBaseHeight,
             width: otherBaseWidth,
@@ -368,6 +431,7 @@ export const GardenPlotVisual = ({ largeur, longueur, plantings, plants, onOverl
           position_x: Math.round(position.x),
           position_y: Math.round(position.y),
           individual_positions: individualPositions && individualPositions.length > 0 ? individualPositions : undefined,
+          rotation: rotations.get(position.planting_id),
         })
 
         const factors = sizeFactors.get(position.planting_id)
@@ -427,18 +491,26 @@ export const GardenPlotVisual = ({ largeur, longueur, plantings, plants, onOverl
     const rawBaseHeight = isRotated ? plantSpacingBetweenPlants : plantSpacingBetweenRows
 
     const gridPos = gridPositions.get(plantingId)
+    const rotation = rotations.get(plantingId) ?? 0
     let gridCols = dp.planting.quantity
     let gridRows = 1
     if (gridPos && gridPos.length > 0) {
-      const minRow = Math.min(...gridPos.map(p => p.row))
-      const maxRow = Math.max(...gridPos.map(p => p.row))
-      const minCol = Math.min(...gridPos.map(p => p.col))
-      const maxCol = Math.max(...gridPos.map(p => p.col))
+      const rotatedGrid = rotateGridPositions(gridPos, rotation)
+      const minRow = Math.min(...rotatedGrid.map(p => p.row))
+      const maxRow = Math.max(...rotatedGrid.map(p => p.row))
+      const minCol = Math.min(...rotatedGrid.map(p => p.col))
+      const maxCol = Math.max(...rotatedGrid.map(p => p.col))
       gridCols = maxCol - minCol + 1
       gridRows = maxRow - minRow + 1
     }
 
     const rect = getPlantRect(dp)
+
+    let effectiveBaseWidth = rawBaseWidth
+    let effectiveBaseHeight = rawBaseHeight
+    if (rotation % 2 === 1) {
+      [effectiveBaseWidth, effectiveBaseHeight] = [effectiveBaseHeight, effectiveBaseWidth]
+    }
 
     setResizingPlant(plantingId)
     setResizeStart({
@@ -446,8 +518,8 @@ export const GardenPlotVisual = ({ largeur, longueur, plantings, plants, onOverl
       mouseY: e.clientY,
       widthFactor: factors.width_factor,
       lengthFactor: factors.length_factor,
-      baseWidth: rawBaseWidth,
-      baseHeight: rawBaseHeight,
+      baseWidth: effectiveBaseWidth,
+      baseHeight: effectiveBaseHeight,
       gridCols,
       gridRows,
       corner,
@@ -513,8 +585,13 @@ export const GardenPlotVisual = ({ largeur, longueur, plantings, plants, onOverl
       newX = Math.max(0, Math.min(newX, displayWidth - newWidthCm))
       newY = Math.max(0, Math.min(newY, displayHeight - newHeightCm))
 
-      const newWidthFactor = Math.round((newWidthCm / (resizeStart.gridCols * resizeStart.baseWidth)) * 10) / 10
-      const newLengthFactor = Math.round((newHeightCm / (resizeStart.gridRows * resizeStart.baseHeight)) * 10) / 10
+      const rotation = rotations.get(resizingPlant) ?? 0
+      let newWidthFactor = Math.round((newWidthCm / (resizeStart.gridCols * resizeStart.baseWidth)) * 10) / 10
+      let newLengthFactor = Math.round((newHeightCm / (resizeStart.gridRows * resizeStart.baseHeight)) * 10) / 10
+      
+      if (rotation % 2 === 1) {
+        [newWidthFactor, newLengthFactor] = [newLengthFactor, newWidthFactor]
+      }
 
       setPositions(prev => prev.map(pos =>
         pos.planting_id === resizingPlant ? { ...pos, x: Math.round(newX / 5) * 5, y: Math.round(newY / 5) * 5 } : pos
@@ -769,12 +846,18 @@ export const GardenPlotVisual = ({ largeur, longueur, plantings, plants, onOverl
             const overlapping = hasOverlap(dp.planting.id)
             const rect = getPlantRect(dp)
             const factors = sizeFactors.get(dp.planting.id) || { width_factor: 1, length_factor: 1 }
+            const rotation = rotations.get(dp.planting.id) ?? 0
             const isUndersized = factors.width_factor < 1 || factors.length_factor < 1
             const isModified = factors.width_factor !== 1 || factors.length_factor !== 1
             const plantSpacingBetweenPlants = dp.plant.spacing_between_plants ?? 30
             const plantSpacingBetweenRows = dp.plant.spacing_between_rows ?? 40
-            const baseWidth = (isRotated ? plantSpacingBetweenRows : plantSpacingBetweenPlants) * factors.width_factor
-            const baseHeight = (isRotated ? plantSpacingBetweenPlants : plantSpacingBetweenRows) * factors.length_factor
+            let baseWidth = (isRotated ? plantSpacingBetweenRows : plantSpacingBetweenPlants) * factors.width_factor
+            let baseHeight = (isRotated ? plantSpacingBetweenPlants : plantSpacingBetweenRows) * factors.length_factor
+            
+            if (rotation % 2 === 1) {
+              [baseWidth, baseHeight] = [baseHeight, baseWidth]
+            }
+            
             const gridPos = gridPositions.get(dp.planting.id)
 
             return (
@@ -785,11 +868,12 @@ export const GardenPlotVisual = ({ largeur, longueur, plantings, plants, onOverl
               >
                 {gridPos && gridPos.length > 0 ? (
                   <>
-                    {gridPos.map((pos, idx) => {
-                      const minRow = Math.min(...gridPos.map(p => p.row))
-                      const minCol = Math.min(...gridPos.map(p => p.col))
-
-                      return (
+                    {(() => {
+                      const rotatedGrid = rotateGridPositions(gridPos, rotation)
+                      const minRow = Math.min(...rotatedGrid.map(p => p.row))
+                      const minCol = Math.min(...rotatedGrid.map(p => p.col))
+                      
+                      return rotatedGrid.map((pos, idx) => (
                         <div
                           key={idx}
                           className={`absolute rounded cursor-grab active:cursor-grabbing ${
@@ -810,8 +894,8 @@ export const GardenPlotVisual = ({ largeur, longueur, plantings, plants, onOverl
                           onMouseDown={(e) => handleMouseDown(e, dp.planting.id)}
                           onDoubleClick={() => handleDoubleClick(dp.planting.id)}
                         />
-                      )
-                    })}
+                      ))
+                    })()}
                     <div
                       className="absolute pointer-events-none flex flex-col items-center justify-center gap-1"
                       style={{
@@ -858,11 +942,12 @@ export const GardenPlotVisual = ({ largeur, longueur, plantings, plants, onOverl
                         height: `${rect.height * scale}px`,
                       }}
                     >
-                      {getPerimeterPath(gridPos).map((edge, i) => {
-                        const minRow = Math.min(...gridPos.map(p => p.row))
-                        const minCol = Math.min(...gridPos.map(p => p.col))
-
-                        return (
+                      {(() => {
+                        const rotatedGrid = rotateGridPositions(gridPos, rotation)
+                        const minRow = Math.min(...rotatedGrid.map(p => p.row))
+                        const minCol = Math.min(...rotatedGrid.map(p => p.col))
+                        
+                        return getPerimeterPath(rotatedGrid).map((edge, i) => (
                           <line
                             key={i}
                             x1={((edge.x1 - minCol) * baseWidth) * scale}
@@ -872,29 +957,53 @@ export const GardenPlotVisual = ({ largeur, longueur, plantings, plants, onOverl
                             stroke={isUndersized ? '#d97706' : isModified ? '#2563eb' : '#059669'}
                             strokeWidth="3"
                           />
-                        )
-                      })}
+                        ))
+                      })()}
                     </svg>
-                    {isModified && hoveredPlant === dp.planting.id && (
-                      <button
-                        className="absolute z-20 text-white text-xs px-2 py-1 rounded shadow-lg pointer-events-auto"
-                        style={{
-                          left: `${(dp.position.x + rect.width / 2) * scale}px`,
-                          top: `${(dp.position.y + 4) * scale}px`,
-                          transform: 'translate(-50%, 0)',
-                          background: isUndersized ? '#d97706' : '#2563eb',
-                        }}
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          setSizeFactors(prev => {
-                            const updated = new Map(prev)
-                            updated.set(dp.planting.id, { width_factor: 1, length_factor: 1 })
-                            return updated
-                          })
-                        }}
-                      >
-                        Reset Size
-                      </button>
+                    {hoveredPlant === dp.planting.id && (
+                      <>
+                        <button
+                          className="absolute z-20 text-white text-xs px-2 py-1 rounded shadow-lg pointer-events-auto"
+                          style={{
+                            left: `${(dp.position.x + rect.width / 2) * scale}px`,
+                            top: `${(dp.position.y + 4) * scale}px`,
+                            transform: 'translate(-50%, 0)',
+                            background: '#8b5cf6',
+                          }}
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            setRotations(prev => {
+                              const updated = new Map(prev)
+                              const current = updated.get(dp.planting.id) ?? 0
+                              updated.set(dp.planting.id, (current + 1) % 4)
+                              return updated
+                            })
+                          }}
+                        >
+                          🔄 Rotate
+                        </button>
+                        {isModified && (
+                          <button
+                            className="absolute z-20 text-white text-xs px-2 py-1 rounded shadow-lg pointer-events-auto"
+                            style={{
+                              left: `${(dp.position.x + rect.width / 2) * scale}px`,
+                              top: `${(dp.position.y + 30) * scale}px`,
+                              transform: 'translate(-50%, 0)',
+                              background: isUndersized ? '#d97706' : '#2563eb',
+                            }}
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              setSizeFactors(prev => {
+                                const updated = new Map(prev)
+                                updated.set(dp.planting.id, { width_factor: 1, length_factor: 1 })
+                                return updated
+                              })
+                            }}
+                          >
+                            Reset Size
+                          </button>
+                        )}
+                      </>
                     )}
                     {hoveredPlant === dp.planting.id && (
                       <>
