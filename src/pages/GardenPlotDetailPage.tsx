@@ -89,7 +89,7 @@ export const GardenPlotDetailPage = () => {
   const plotPlantings = allPlantings?.filter(p => p.plot_id === id) || []
 
   const getPlantInfo = (plantId: string) => {
-    return plants?.find(p => p.id === plantId)
+    return plants?.plants?.find(p => p.id === plantId)
   }
 
   const getNextStatus = (currentStatus: string): 'planted' | 'harvested' | null => {
@@ -346,7 +346,7 @@ export const GardenPlotDetailPage = () => {
         )}
 
         {showForm && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="fixed inset-0 flex items-center justify-center p-4 z-50" style={{ background: 'rgba(0, 0, 0, 0.3)' }}>
             <div className="bg-white rounded-lg shadow-xl max-w-md w-full max-h-[90vh] overflow-y-auto">
               <div className="p-6">
                 <div className="flex justify-between items-center mb-4">
@@ -370,7 +370,7 @@ export const GardenPlotDetailPage = () => {
                       className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-green-500 focus:border-green-500"
                     >
                       <option value="">Choose a plant...</option>
-                      {plants?.map((plant) => (
+                      {plants?.plants?.map((plant) => (
                         <option key={plant.id} value={plant.id}>
                           {plant.name} - {plant.variety} ({plant.type})
                         </option>
@@ -396,7 +396,7 @@ export const GardenPlotDetailPage = () => {
                     <div className="bg-gray-50 p-4 rounded-lg">
                       <h3 className="font-semibold mb-2">Plant Details</h3>
                       {(() => {
-                        const plant = plants.find(p => p.id === selectedPlantId)
+                        const plant = plants?.plants?.find(p => p.id === selectedPlantId)
                         if (!plant) return null
                         return (
                           <div className="space-y-1 text-sm">
@@ -460,7 +460,7 @@ export const GardenPlotDetailPage = () => {
           return (
             <div 
               className="fixed inset-0 flex items-center justify-center p-4 z-50"
-              style={{ backgroundColor: 'rgba(0, 0, 0, 0.3)' }}
+              style={{ background: 'rgba(0, 0, 0, 0.3)' }}
               onClick={() => {
                 setShowPlantDetails(false)
                 setSelectedPlantForDetails(null)
@@ -551,7 +551,7 @@ export const GardenPlotDetailPage = () => {
         {showDeleteConfirm && plantingToDelete && (
           <div 
             className="fixed inset-0 flex items-center justify-center p-4 z-50"
-            style={{ backgroundColor: 'rgba(0, 0, 0, 0.5)' }}
+            style={{ background: 'rgba(0, 0, 0, 0.3)' }}
             onClick={() => {
               setShowDeleteConfirm(false)
               setPlantingToDelete(null)
