@@ -11,7 +11,9 @@ export const getPlants = async (filters?: {
   sunlight_requirement?: string
   spacing_between_plants?: string
   spacing_between_rows?: string
-}): Promise<Plant[]> => {
+  page?: number
+  limit?: number
+}): Promise<{ plants: Plant[], total: number, page: number, limit: number }> => {
   const params = new URLSearchParams()
   if (filters?.search) params.append("search", filters.search)
   if (filters?.type) params.append("type", filters.type)
@@ -22,9 +24,11 @@ export const getPlants = async (filters?: {
   if (filters?.sunlight_requirement) params.append("sunlight_requirement", filters.sunlight_requirement)
   if (filters?.spacing_between_plants) params.append("spacing_between_plants", filters.spacing_between_plants)
   if (filters?.spacing_between_rows) params.append("spacing_between_rows", filters.spacing_between_rows)
+  if (filters?.page) params.append("page", filters.page.toString())
+  if (filters?.limit) params.append("limit", filters.limit.toString())
   
   const query = params.toString()
-  return apiRequest<Plant[]>(`/plants${query ? `?${query}` : ""}`)
+  return apiRequest<{ plants: Plant[], total: number, page: number, limit: number }>(`/plants${query ? `?${query}` : ""}`)
 }
 
 export const getPlant = async (id: string): Promise<Plant> => {

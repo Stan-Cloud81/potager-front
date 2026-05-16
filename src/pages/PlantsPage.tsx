@@ -17,6 +17,8 @@ export const PlantsPage = () => {
   const [quantity, setQuantity] = useState(1)
   const [searchQuery, setSearchQuery] = useState('')
   const [showFilters, setShowFilters] = useState(false)
+  const [page, setPage] = useState(1)
+  const [limit] = useState(50)
   const [filters, setFilters] = useState({
     type: '',
     planting_months: 0,
@@ -28,6 +30,16 @@ export const PlantsPage = () => {
     spacing_between_rows_min: 0,
     spacing_between_rows_max: 100,
   })
+
+  const handleSearchChange = (value: string) => {
+    setSearchQuery(value)
+    setPage(1)
+  }
+
+  const handleFilterChange = (newFilters: typeof filters) => {
+    setFilters(newFilters)
+    setPage(1)
+  }
 
   const getSpacingFilter = (min: number, max: number) => {
     if (min === 0 && max === 100) return undefined
@@ -44,12 +56,18 @@ export const PlantsPage = () => {
     sunlight_requirement: filters.sunlight_requirement || undefined,
     spacing_between_plants: getSpacingFilter(filters.spacing_between_plants_min, filters.spacing_between_plants_max),
     spacing_between_rows: getSpacingFilter(filters.spacing_between_rows_min, filters.spacing_between_rows_max),
+    page,
+    limit,
   }
 
-  const { data: plants, isLoading, error } = useQuery({
+  const { data: plantsData, isLoading, error } = useQuery({
     queryKey: ['plants', activeFilters],
     queryFn: () => getPlants(activeFilters),
   })
+
+  const plants = plantsData?.plants
+  const totalPlants = plantsData?.total ?? 0
+  const totalPages = Math.ceil(totalPlants / limit)
 
   const { data: plantDetails } = useQuery({
     queryKey: ['plantDetails', selectedPlantForDetails],
@@ -83,13 +101,16 @@ export const PlantsPage = () => {
     <Layout>
       <div>
         <div className="mb-6">
-          <h1 className="text-3xl font-bold text-gray-900 mb-4">Plants</h1>
+          <div className="flex items-center gap-3 mb-4">
+            <h1 className="text-3xl font-bold text-gray-900">Plants</h1>
+            {!isLoading && <span className="text-lg text-gray-600">({totalPlants})</span>}
+          </div>
           <div className="flex gap-4 items-center">
             <input
               type="text"
               placeholder="Search plants by name..."
               value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
+              onChange={(e) => handleSearchChange(e.target.value)}
               className="flex-1 px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-green-500 focus:border-green-500"
             />
             <button
@@ -107,7 +128,7 @@ export const PlantsPage = () => {
                   <label className="block text-sm font-medium text-gray-700 mb-1">Type</label>
                   <select
                     value={filters.type}
-                    onChange={(e) => setFilters({ ...filters, type: e.target.value })}
+                    onChange={(e) => handleFilterChange({ ...filters, type: e.target.value })}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-green-500 focus:border-green-500"
                   >
                     <option value="">All</option>
@@ -120,7 +141,7 @@ export const PlantsPage = () => {
                   <label className="block text-sm font-medium text-gray-700 mb-1">Planting Month</label>
                   <select
                     value={filters.planting_months}
-                    onChange={(e) => setFilters({ ...filters, planting_months: parseInt(e.target.value) })}
+                    onChange={(e) => handleFilterChange({ ...filters, planting_months: parseInt(e.target.value) })}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-green-500 focus:border-green-500"
                   >
                     <option value="0">All</option>
@@ -134,7 +155,7 @@ export const PlantsPage = () => {
                   <label className="block text-sm font-medium text-gray-700 mb-1">Harvest Month</label>
                   <select
                     value={filters.harvested_months}
-                    onChange={(e) => setFilters({ ...filters, harvested_months: parseInt(e.target.value) })}
+                    onChange={(e) => handleFilterChange({ ...filters, harvested_months: parseInt(e.target.value) })}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-green-500 focus:border-green-500"
                   >
                     <option value="0">All</option>
@@ -148,7 +169,7 @@ export const PlantsPage = () => {
                   <label className="block text-sm font-medium text-gray-700 mb-1">Watering Frequency</label>
                   <select
                     value={filters.watering_frequency}
-                    onChange={(e) => setFilters({ ...filters, watering_frequency: e.target.value })}
+                    onChange={(e) => handleFilterChange({ ...filters, watering_frequency: e.target.value })}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-green-500 focus:border-green-500"
                   >
                     <option value="">All</option>
@@ -162,7 +183,7 @@ export const PlantsPage = () => {
                   <label className="block text-sm font-medium text-gray-700 mb-1">Sunlight Requirement</label>
                   <select
                     value={filters.sunlight_requirement}
-                    onChange={(e) => setFilters({ ...filters, sunlight_requirement: e.target.value })}
+                    onChange={(e) => handleFilterChange({ ...filters, sunlight_requirement: e.target.value })}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-green-500 focus:border-green-500"
                   >
                     <option value="">All</option>
@@ -195,7 +216,7 @@ export const PlantsPage = () => {
                       onChange={(e) => {
                         const val = parseInt(e.target.value)
                         if (val <= filters.spacing_between_plants_max) {
-                          setFilters({ ...filters, spacing_between_plants_min: val })
+                          handleFilterChange({ ...filters, spacing_between_plants_min: val })
                         }
                       }}
                       className="absolute w-full appearance-none bg-transparent pointer-events-none [&::-webkit-slider-thumb]:pointer-events-auto [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-green-700 [&::-webkit-slider-thumb]:cursor-pointer [&::-moz-range-thumb]:pointer-events-auto [&::-moz-range-thumb]:w-4 [&::-moz-range-thumb]:h-4 [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:bg-green-700 [&::-moz-range-thumb]:border-0 [&::-moz-range-thumb]:cursor-pointer"
@@ -208,7 +229,7 @@ export const PlantsPage = () => {
                       onChange={(e) => {
                         const val = parseInt(e.target.value)
                         if (val >= filters.spacing_between_plants_min) {
-                          setFilters({ ...filters, spacing_between_plants_max: val })
+                          handleFilterChange({ ...filters, spacing_between_plants_max: val })
                         }
                       }}
                       className="absolute w-full appearance-none bg-transparent pointer-events-none [&::-webkit-slider-thumb]:pointer-events-auto [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-green-700 [&::-webkit-slider-thumb]:cursor-pointer [&::-moz-range-thumb]:pointer-events-auto [&::-moz-range-thumb]:w-4 [&::-moz-range-thumb]:h-4 [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:bg-green-700 [&::-moz-range-thumb]:border-0 [&::-moz-range-thumb]:cursor-pointer"
@@ -237,7 +258,7 @@ export const PlantsPage = () => {
                       onChange={(e) => {
                         const val = parseInt(e.target.value)
                         if (val <= filters.spacing_between_rows_max) {
-                          setFilters({ ...filters, spacing_between_rows_min: val })
+                          handleFilterChange({ ...filters, spacing_between_rows_min: val })
                         }
                       }}
                       className="absolute w-full appearance-none bg-transparent pointer-events-none [&::-webkit-slider-thumb]:pointer-events-auto [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-green-700 [&::-webkit-slider-thumb]:cursor-pointer [&::-moz-range-thumb]:pointer-events-auto [&::-moz-range-thumb]:w-4 [&::-moz-range-thumb]:h-4 [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:bg-green-700 [&::-moz-range-thumb]:border-0 [&::-moz-range-thumb]:cursor-pointer"
@@ -250,7 +271,7 @@ export const PlantsPage = () => {
                       onChange={(e) => {
                         const val = parseInt(e.target.value)
                         if (val >= filters.spacing_between_rows_min) {
-                          setFilters({ ...filters, spacing_between_rows_max: val })
+                          handleFilterChange({ ...filters, spacing_between_rows_max: val })
                         }
                       }}
                       className="absolute w-full appearance-none bg-transparent pointer-events-none [&::-webkit-slider-thumb]:pointer-events-auto [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-green-700 [&::-webkit-slider-thumb]:cursor-pointer [&::-moz-range-thumb]:pointer-events-auto [&::-moz-range-thumb]:w-4 [&::-moz-range-thumb]:h-4 [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:bg-green-700 [&::-moz-range-thumb]:border-0 [&::-moz-range-thumb]:cursor-pointer"
@@ -260,7 +281,7 @@ export const PlantsPage = () => {
               </div>
 
               <button
-                onClick={() => setFilters({
+                onClick={() => handleFilterChange({
                   type: '',
                   planting_months: 0,
                   harvested_months: 0,
@@ -298,6 +319,7 @@ export const PlantsPage = () => {
         )}
 
         {plants && plants.length > 0 && (
+          <>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-6">
             {plants.map((plant) => (
               <div key={plant.id} className="bg-white shadow-md rounded-lg overflow-hidden">
@@ -371,6 +393,28 @@ export const PlantsPage = () => {
               </div>
             ))}
           </div>
+          {totalPages > 1 && (
+            <div className="mt-8 flex justify-center items-center gap-2">
+              <button
+                onClick={() => setPage(p => Math.max(1, p - 1))}
+                disabled={page === 1}
+                className="px-4 py-2 border border-gray-300 rounded-md disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
+              >
+                Previous
+              </button>
+              <span className="text-gray-700">
+                Page {page} of {totalPages}
+              </span>
+              <button
+                onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+                disabled={page === totalPages}
+                className="px-4 py-2 border border-gray-300 rounded-md disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
+              >
+                Next
+              </button>
+            </div>
+          )}
+          </>
         )}
 
         {showPlantDetails && plantDetails && selectedPlantForDetails && (() => {

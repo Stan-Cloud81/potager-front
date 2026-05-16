@@ -17,7 +17,7 @@ export const MonthIndicator = ({ label, months, color = 'green' }: MonthIndicato
           <div
             key={index}
             className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-medium ${
-              months.includes(index + 1)
+              months?.includes(index + 1)
                 ? `${bgColor} text-white`
                 : 'bg-gray-200 text-gray-500'
             }`}
