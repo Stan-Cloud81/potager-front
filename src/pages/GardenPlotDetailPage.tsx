@@ -6,6 +6,7 @@ import { getPlantings, createPlanting, updatePlantingStatus } from '../api/plant
 import { getPlants, getPlantDetails } from '../api/plants'
 import { Layout } from '../components/Layout'
 import { PlantImage } from '../components/PlantImage'
+import { MonthIndicator } from '../components/MonthIndicator'
 import { formatDate } from '../utils/date'
 
 export const GardenPlotDetailPage = () => {
@@ -396,18 +397,26 @@ export const GardenPlotDetailPage = () => {
                     </button>
                   </div>
                   <div className="space-y-4">
+                    <div className="border-b pb-4">
+                      <div className="text-sm font-semibold text-gray-600 uppercase mb-3">
+                        Planting Schedule
+                      </div>
+                      <div className="space-y-3">
+                        <MonthIndicator label="Seedling" months={plant.planting_months} color="green" />
+                        <MonthIndicator label="Harvest" months={plant.harvested_months} color="red" />
+                      </div>
+                    </div>
                     <div className="border-b pb-2">
                       <div className="text-sm font-semibold text-gray-600 uppercase mb-1">
                         Plant Information
                       </div>
                       <div className="text-gray-900 space-y-2">
                         {Object.entries(plant)
-                          .filter(([key]) => key !== 'id')
+                          .filter(([key]) => key !== 'id' && key !== 'planting_months' && key !== 'harvested_months')
                           .map(([key, value]) => {
                             const getIcon = (key: string) => {
                               if (key.includes('type')) return '🏷️'
                               if (key.includes('variety')) return '🌿'
-                              if (key.includes('planting')) return '📅'
                               if (key.includes('harvest')) return '⏱️'
                               if (key.includes('watering')) return '💧'
                               if (key.includes('sunlight')) return '☀️'

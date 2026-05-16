@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query'
 import { getPlants, getPlantDetails } from '../api/plants'
 import { Layout } from '../components/Layout'
 import { PlantImage } from '../components/PlantImage'
+import { MonthIndicator } from '../components/MonthIndicator'
 
 export const PlantsPage = () => {
   const [showPlantDetails, setShowPlantDetails] = useState(false)
@@ -66,9 +67,13 @@ export const PlantsPage = () => {
                   </button>
                 </div>
                 <div className="p-6">
-                  <h3 className="text-xl font-semibold text-gray-900 mb-2">
+                  <h3 className="text-xl font-semibold text-gray-900 mb-4">
                     {plant.name}
                   </h3>
+                  <div className="space-y-3 mb-4">
+                    <MonthIndicator label="Seedling" months={plant.planting_months} color="green" />
+                    <MonthIndicator label="Harvest" months={plant.harvested_months} color="red" />
+                  </div>
                   <div className="space-y-2 text-sm">
                     <div className="flex justify-between">
                       <span className="text-gray-600">Type:</span>
@@ -77,10 +82,6 @@ export const PlantsPage = () => {
                     <div className="flex justify-between">
                       <span className="text-gray-600">Variety:</span>
                       <span className="font-medium">{plant.variety}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">Planting Months:</span>
-                      <span className="font-medium">{plant.planting_months.join(', ')}</span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-gray-600">Harvest Time:</span>
@@ -150,18 +151,26 @@ export const PlantsPage = () => {
                     </button>
                   </div>
                   <div className="space-y-4">
+                    <div className="border-b pb-4">
+                      <div className="text-sm font-semibold text-gray-600 uppercase mb-3">
+                        Planting Schedule
+                      </div>
+                      <div className="space-y-3">
+                        <MonthIndicator label="Seedling" months={plant.planting_months} color="green" />
+                        <MonthIndicator label="Harvest" months={plant.harvested_months} color="red" />
+                      </div>
+                    </div>
                     <div className="border-b pb-2">
                       <div className="text-sm font-semibold text-gray-600 uppercase mb-1">
                         Plant Information
                       </div>
                       <div className="text-gray-900 space-y-2">
                         {Object.entries(plant)
-                          .filter(([key]) => key !== 'id')
+                          .filter(([key]) => key !== 'id' && key !== 'planting_months' && key !== 'harvested_months')
                           .map(([key, value]) => {
                             const getIcon = (key: string) => {
                               if (key.includes('type')) return '🏷️'
                               if (key.includes('variety')) return '🌿'
-                              if (key.includes('planting')) return '📅'
                               if (key.includes('harvest')) return '⏱️'
                               if (key.includes('watering')) return '💧'
                               if (key.includes('sunlight')) return '☀️'

@@ -4,6 +4,7 @@ export type Plant = {
   type: "vegetable" | "fruit"
   variety: string
   planting_months: number[]
+  harvested_months: number[]
   harvest_time_days: number
   watering_frequency: "low" | "medium" | "high"
   sunlight_requirement: "low" | "partial" | "full"
