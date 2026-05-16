@@ -5,9 +5,10 @@ type PlantImageProps = {
   plantId: string
   alt: string
   className?: string
+  style?: React.CSSProperties
 }
 
-export const PlantImage = ({ plantId, alt, className = '' }: PlantImageProps) => {
+export const PlantImage = ({ plantId, alt, className = '', style }: PlantImageProps) => {
   const [imageSrc, setImageSrc] = useState<string>('')
   const [error, setError] = useState(false)
 
@@ -50,7 +51,7 @@ export const PlantImage = ({ plantId, alt, className = '' }: PlantImageProps) =>
 
   if (error) {
     return (
-      <div className={`bg-gray-200 flex items-center justify-center ${className}`}>
+      <div className={`bg-gray-200 flex items-center justify-center ${className}`} style={style}>
         <span className="text-4xl">🌱</span>
       </div>
     )
@@ -58,7 +59,7 @@ export const PlantImage = ({ plantId, alt, className = '' }: PlantImageProps) =>
 
   if (!imageSrc) {
     return (
-      <div className={`bg-gray-100 animate-pulse ${className}`}></div>
+      <div className={`bg-gray-100 animate-pulse ${className}`} style={style}></div>
     )
   }
 
@@ -67,6 +68,7 @@ export const PlantImage = ({ plantId, alt, className = '' }: PlantImageProps) =>
       src={imageSrc} 
       alt={alt}
       className={className}
+      style={style}
     />
   )
 }

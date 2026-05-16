@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from 'react'
 import { Plant, Planting, PlantPosition, IndividualPlantPosition } from '../types'
 import { updatePlantPositions } from '../api/plantings'
 import { useMutation } from '@tanstack/react-query'
+import { PlantImage } from './PlantImage'
 
 type GardenPlotVisualProps = {
   plotId: string
@@ -61,6 +62,18 @@ export const GardenPlotVisual = ({ plotId, plotWidth, plotLength, plantings, pla
     }))
   })
 
+  const [gridPositions, setGridPositions] = useState<Map<string, GridPosition[]>>(() => {
+    const initialGridPositions = new Map<string, GridPosition[]>()
+    plantings.forEach((planting) => {
+      const initialGrid: GridPosition[] = []
+      for (let i = 0; i < planting.quantity; i++) {
+        initialGrid.push({ row: 0, col: i })
+      }
+      initialGridPositions.set(planting.id, initialGrid)
+    })
+    return initialGridPositions
+  })
+
   const getOriginalPosition = (x: number, y: number, width: number, height: number) => {
     if (isRotated) {
       return {
@@ -71,7 +84,6 @@ export const GardenPlotVisual = ({ plotId, plotWidth, plotLength, plantings, pla
     return { x, y }
   }
 
-  const [gridPositions, setGridPositions] = useState<Map<string, GridPosition[]>>(new Map())
   const [isSaving, setIsSaving] = useState(false)
 
   const savePositionsMutation = useMutation({
@@ -414,12 +426,42 @@ export const GardenPlotVisual = ({ plotId, plotWidth, plotLength, plantings, pla
                             width: `${baseWidth * scale}px`,
                             height: `${baseHeight * scale}px`,
                             border: 'none',
+                            opacity: 0.3,
                           }}
                           onMouseDown={(e) => handleMouseDown(e, dp.planting.id)}
                           onDoubleClick={() => handleDoubleClick(dp.planting.id)}
                         />
                       )
                     })}
+                    <div
+                      className="absolute pointer-events-none flex flex-col items-center justify-center gap-1"
+                      style={{
+                        left: `${(dp.position.x + rect.width / 2) * scale}px`,
+                        top: `${(dp.position.y + rect.height / 2) * scale}px`,
+                        transform: 'translate(-50%, -50%)',
+                        maxWidth: `${rect.width * scale * 0.9}px`,
+                        maxHeight: `${rect.height * scale * 0.85}px`,
+                      }}
+                    >
+                      <PlantImage
+                        plantId={dp.plant.id}
+                        alt={dp.plant.name}
+                        className="rounded-full flex-shrink-0"
+                        style={{
+                          width: `${baseHeight * scale * 0.4}px`,
+                          height: `${baseHeight * scale * 0.4}px`,
+                          objectFit: 'cover',
+                        }}
+                      />
+                      <div className="text-center flex-shrink min-w-0" style={{ maxWidth: '100%' }}>
+                        <div className="font-bold truncate leading-tight" style={{ fontSize: '9px' }}>
+                          {dp.plant.name}{dp.plant.variety ? ` - ${dp.plant.variety}` : ''}
+                        </div>
+                        <div className="font-semibold leading-tight" style={{ fontSize: '8px' }}>
+                          ×{dp.planting.quantity}
+                        </div>
+                      </div>
+                    </div>
                     <svg
                       className="absolute pointer-events-none"
                       style={{
