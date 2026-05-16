@@ -612,6 +612,8 @@ export const GardenPlotVisual = ({ plotWidth, plotLength, plantings, plants, onO
     const x = Math.round((e.clientX - rect.left) / scale / 5) * 5
     const y = Math.round((e.clientY - rect.top) / scale / 5) * 5
 
+    const planting = plantings.find(p => p.id === draggedFromSidebar)
+    
     setPositions(prev => {
       const existing = prev.find(p => p.planting_id === draggedFromSidebar)
       if (existing) {
@@ -620,6 +622,25 @@ export const GardenPlotVisual = ({ plotWidth, plotLength, plantings, plants, onO
         return [...prev, { planting_id: draggedFromSidebar, x, y }]
       }
     })
+
+    if (planting && !sizeFactors.has(draggedFromSidebar)) {
+      setSizeFactors(prev => {
+        const updated = new Map(prev)
+        updated.set(draggedFromSidebar, {
+          width_factor: planting.width_factor ?? 1,
+          length_factor: planting.length_factor ?? 1,
+        })
+        return updated
+      })
+    }
+
+    if (planting && !gridPositions.has(draggedFromSidebar)) {
+      const initialGrid: GridPosition[] = []
+      for (let i = 0; i < planting.quantity; i++) {
+        initialGrid.push({ row: 0, col: i })
+      }
+      setGridPositions(prev => new Map(prev).set(draggedFromSidebar, initialGrid))
+    }
 
     setDraggedFromSidebar(null)
   }
