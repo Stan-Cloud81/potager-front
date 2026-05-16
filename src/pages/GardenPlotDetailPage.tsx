@@ -23,6 +23,7 @@ export const GardenPlotDetailPage = () => {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   const [plantingToDelete, setPlantingToDelete] = useState<string | null>(null)
   const [hasOverlap, setHasOverlap] = useState(false)
+  const [showHarvested, setShowHarvested] = useState(false)
 
   const { data: plot, isLoading: plotLoading } = useQuery({
     queryKey: ['plot', id],
@@ -88,6 +89,8 @@ export const GardenPlotDetailPage = () => {
   }
 
   const plotPlantings = allPlantings?.filter(p => p.plot_id === id) || []
+  const activePlantings = plotPlantings.filter(p => p.status !== 'harvested')
+  const harvestedPlantings = plotPlantings.filter(p => p.status === 'harvested')
 
   const plantQueries = useQuery({
     queryKey: ['plotPlants', id, plotPlantings.map(p => p.plant_id).join(',')],
@@ -165,7 +168,7 @@ export const GardenPlotDetailPage = () => {
           </div>
         </div>
 
-        {plantQueries.data && plotPlantings.length > 0 && (
+        {plantQueries.data && activePlantings.length > 0 && (
           <div className="mb-8">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-2xl font-bold text-gray-900">Garden Layout</h2>
@@ -179,7 +182,7 @@ export const GardenPlotDetailPage = () => {
               plotId={plot.id}
               plotWidth={plot.width * 100}
               plotLength={plot.length * 100}
-              plantings={plotPlantings}
+              plantings={activePlantings}
               plants={plantQueries.data}
               onOverlapChange={setHasOverlap}
             />
@@ -188,7 +191,7 @@ export const GardenPlotDetailPage = () => {
 
         <h2 className="text-2xl font-bold text-gray-900 mb-4">Plants</h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-6">
-          {plotPlantings.map((planting) => {
+          {activePlantings.map((planting) => {
             const plant = getPlantInfo(planting.plant_id)
             const nextStatus = getNextStatus(planting.status)
             const previousStatus = getPreviousStatus(planting.status)
@@ -353,9 +356,126 @@ export const GardenPlotDetailPage = () => {
           </div>
         </div>
 
-        {plotPlantings.length === 0 && (
+        {activePlantings.length === 0 && (
           <div className="text-center py-12 text-gray-500">
             No plants in this plot yet. Click the + box to add one!
+          </div>
+        )}
+
+        {harvestedPlantings.length > 0 && (
+          <div className="mt-8">
+            <button
+              onClick={() => setShowHarvested(!showHarvested)}
+              className="flex items-center gap-2 text-xl font-bold text-gray-900 mb-4 hover:text-gray-700 transition-colors"
+            >
+              <span className={`transform transition-transform ${showHarvested ? 'rotate-90' : ''}`}>
+                ▶
+              </span>
+              Harvested Plants ({harvestedPlantings.length})
+            </button>
+            
+            {showHarvested && (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-6">
+                {harvestedPlantings.map((planting) => {
+                  const plant = getPlantInfo(planting.plant_id)
+                  const previousStatus = getPreviousStatus(planting.status)
+                  
+                  if (!plant) return null
+
+                  return (
+                    <div
+                      key={planting.id}
+                      className="bg-white shadow-lg rounded-xl overflow-hidden border border-gray-200 hover:shadow-xl transition-shadow opacity-80"
+                    >
+                      <div className="relative">
+                        <PlantImage 
+                          plantId={plant.id}
+                          alt={plant.name}
+                          className="w-full h-40 object-contain bg-gray-50"
+                        />
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            setSelectedPlantForDetails(plant.id)
+                            setShowPlantDetails(true)
+                          }}
+                          className="absolute top-2 left-2 bg-white hover:bg-gray-100 text-gray-700 rounded-full p-2 shadow-md"
+                        >
+                          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                          </svg>
+                        </button>
+                      </div>
+                      <div className="p-6">
+                        <div className="flex justify-between items-start mb-3">
+                          <div className="flex-1">
+                            <h3 className="text-xl font-bold text-gray-900">
+                              {plant.name} - {plant.variety}
+                            </h3>
+                            <div className="flex items-center gap-2 mt-1">
+                              <span className="text-sm font-medium text-gray-700">Qty: {planting.quantity}</span>
+                            </div>
+                          </div>
+                          <span className="px-3 py-1 text-xs font-bold rounded-full bg-blue-100 text-blue-800">
+                            HARVESTED
+                          </span>
+                        </div>
+                        
+                        <div className="space-y-2 text-sm mb-4">
+                          <div className="flex justify-between">
+                            <span className="text-gray-600">Variety:</span>
+                            <span className="font-medium">{plant.variety}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-gray-600">Type:</span>
+                            <span className="font-medium capitalize">{plant.type}</span>
+                          </div>
+                        </div>
+
+                        <div className="border-t pt-3 space-y-1 text-sm">
+                          <div className="flex justify-between">
+                            <span className="text-gray-600">Planted:</span>
+                            <span className="font-medium">
+                              {formatDate(planting.planted_at)}
+                            </span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-gray-600">Harvest:</span>
+                            <span className="font-medium">
+                              {formatDate(planting.expected_harvest)}
+                            </span>
+                          </div>
+                        </div>
+
+                        <div className="mt-4 flex gap-2">
+                          {previousStatus && (
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                updateStatusMutation.mutate({ id: planting.id, status: previousStatus })
+                              }}
+                              className="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-800 px-3 py-2 rounded-md text-sm font-medium truncate"
+                            >
+                              ← {previousStatus}
+                            </button>
+                          )}
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              setPlantingToDelete(planting.id)
+                              setShowDeleteConfirm(true)
+                            }}
+                            className="flex-1 bg-red-600 hover:bg-red-700 text-white px-3 py-2 rounded-md text-sm font-medium"
+                          >
+                            Delete
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            )}
           </div>
         )}
 
