@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { getPlants } from '../api/plants'
 import { Layout } from '../components/Layout'
+import { PlantImage } from '../components/PlantImage'
 
 export const PlantsPage = () => {
   const { data: plants, isLoading, error } = useQuery({
@@ -35,6 +36,11 @@ export const PlantsPage = () => {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-6">
             {plants.map((plant) => (
               <div key={plant.id} className="bg-white shadow-md rounded-lg overflow-hidden">
+                <PlantImage 
+                  plantId={plant.id}
+                  alt={plant.name}
+                  className="w-full h-40 object-contain bg-gray-50"
+                />
                 <div className="p-6">
                   <h3 className="text-xl font-semibold text-gray-900 mb-2">
                     {plant.name}

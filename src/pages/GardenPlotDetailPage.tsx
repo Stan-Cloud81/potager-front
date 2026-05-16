@@ -5,6 +5,7 @@ import { getPlot } from '../api/plots'
 import { getPlantings, createPlanting, updatePlantingStatus } from '../api/plantings'
 import { getPlants } from '../api/plants'
 import { Layout } from '../components/Layout'
+import { PlantImage } from '../components/PlantImage'
 import { formatDate } from '../utils/date'
 
 export const GardenPlotDetailPage = () => {
@@ -129,6 +130,11 @@ export const GardenPlotDetailPage = () => {
                   }
                 }}
               >
+                <PlantImage 
+                  plantId={plant.id}
+                  alt={plant.name}
+                  className="w-full h-40 object-contain bg-gray-50"
+                />
                 <div className="p-6">
                   <div className="flex justify-between items-start mb-3">
                     <h3 className="text-xl font-bold text-gray-900">

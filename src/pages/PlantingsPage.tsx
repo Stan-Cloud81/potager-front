@@ -5,6 +5,7 @@ import { getPlants } from '../api/plants'
 import { getPlots } from '../api/plots'
 import { CreatePlantingRequest } from '../types'
 import { Layout } from '../components/Layout'
+import { PlantImage } from '../components/PlantImage'
 import { formatDate } from '../utils/date'
 
 export const PlantingsPage = () => {
@@ -152,6 +153,11 @@ export const PlantingsPage = () => {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-6">
             {plantings.map((planting) => (
               <div key={planting.id} className="bg-white shadow-md rounded-lg overflow-hidden">
+                <PlantImage 
+                  plantId={planting.plant_id}
+                  alt={getPlantName(planting.plant_id)}
+                  className="w-full h-40 object-contain bg-gray-50"
+                />
                 <div className="p-6">
                   <div className="flex justify-between items-start mb-4">
                     <h3 className="text-xl font-semibold text-gray-900">
