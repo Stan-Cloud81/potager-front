@@ -2,7 +2,7 @@ import { useState, FormEvent } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { getPlot } from '../api/plots'
-import { getPlantings, createPlanting, updatePlantingStatus } from '../api/plantings'
+import { getPlantings, createPlanting, updatePlantingStatus, updatePlantingQuantity, deletePlanting } from '../api/plantings'
 import { getPlants, getPlantDetails } from '../api/plants'
 import { Layout } from '../components/Layout'
 import { PlantImage } from '../components/PlantImage'
@@ -15,8 +15,11 @@ export const GardenPlotDetailPage = () => {
   const queryClient = useQueryClient()
   const [showForm, setShowForm] = useState(false)
   const [selectedPlantId, setSelectedPlantId] = useState('')
+  const [quantity, setQuantity] = useState(1)
   const [showPlantDetails, setShowPlantDetails] = useState(false)
   const [selectedPlantForDetails, setSelectedPlantForDetails] = useState<string | null>(null)
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
+  const [plantingToDelete, setPlantingToDelete] = useState<string | null>(null)
 
   const { data: plot, isLoading: plotLoading } = useQuery({
     queryKey: ['plot', id],
@@ -46,6 +49,7 @@ export const GardenPlotDetailPage = () => {
       queryClient.invalidateQueries({ queryKey: ['plantings'] })
       setShowForm(false)
       setSelectedPlantId('')
+      setQuantity(1)
     },
   })
 
@@ -57,10 +61,27 @@ export const GardenPlotDetailPage = () => {
     },
   })
 
+  const updateQuantityMutation = useMutation({
+    mutationFn: ({ id, quantity }: { id: string; quantity: number }) =>
+      updatePlantingQuantity(id, { quantity }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['plantings'] })
+    },
+  })
+
+  const deleteMutation = useMutation({
+    mutationFn: deletePlanting,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['plantings'] })
+      setShowDeleteConfirm(false)
+      setPlantingToDelete(null)
+    },
+  })
+
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault()
     if (!selectedPlantId || !id) return
-    createMutation.mutate({ plant_id: selectedPlantId, plot_id: id })
+    createMutation.mutate({ plant_id: selectedPlantId, plot_id: id, quantity })
   }
 
   const plotPlantings = allPlantings?.filter(p => p.plot_id === id) || []
@@ -162,9 +183,47 @@ export const GardenPlotDetailPage = () => {
                 </div>
                 <div className="p-6">
                   <div className="flex justify-between items-start mb-3">
-                    <h3 className="text-xl font-bold text-gray-900">
-                      {plant.name}
-                    </h3>
+                    <div className="flex-1">
+                      <h3 className="text-xl font-bold text-gray-900">
+                        {plant.name}
+                      </h3>
+                      <div className="flex items-center gap-2 mt-1">
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            if (planting.quantity > 1) {
+                              updateQuantityMutation.mutate({ id: planting.id, quantity: planting.quantity - 1 })
+                            } else {
+                              setPlantingToDelete(planting.id)
+                              setShowDeleteConfirm(true)
+                            }
+                          }}
+                          className={`${
+                            planting.quantity === 1 
+                              ? 'bg-red-200 hover:bg-red-300 text-red-700' 
+                              : 'bg-gray-200 hover:bg-gray-300 text-gray-700'
+                          } rounded px-2 py-0.5 text-xs font-medium`}
+                        >
+                          {planting.quantity === 1 ? (
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                            </svg>
+                          ) : (
+                            '-'
+                          )}
+                        </button>
+                        <span className="text-sm font-medium text-gray-700">Qty: {planting.quantity}</span>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            updateQuantityMutation.mutate({ id: planting.id, quantity: planting.quantity + 1 })
+                          }}
+                          className="bg-gray-200 hover:bg-gray-300 text-gray-700 rounded px-2 py-0.5 text-xs font-medium"
+                        >
+                          +
+                        </button>
+                      </div>
+                    </div>
                     <span className={`px-3 py-1 text-xs font-bold rounded-full ${
                       planting.status === 'harvested' ? 'bg-blue-100 text-blue-800' :
                       planting.status === 'planted' ? 'bg-green-100 text-green-800' :
@@ -196,7 +255,7 @@ export const GardenPlotDetailPage = () => {
                       <span className="font-medium">{plant.spacing_between_plants}cm</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-gray-600">Row Spacing:</span>
+                      <span className="text-gray-600">📏 Row Spacing:</span>
                       <span className="font-medium">{plant.spacing_between_rows}cm</span>
                     </div>
                   </div>
@@ -293,6 +352,20 @@ export const GardenPlotDetailPage = () => {
                         </option>
                       ))}
                     </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Quantity
+                    </label>
+                    <input
+                      type="number"
+                      required
+                      min="1"
+                      value={quantity}
+                      onChange={(e) => setQuantity(parseInt(e.target.value) || 1)}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-green-500 focus:border-green-500"
+                    />
                   </div>
 
                   {selectedPlantId && plants && (
@@ -450,6 +523,49 @@ export const GardenPlotDetailPage = () => {
             </div>
           )
         })()}
+
+        {showDeleteConfirm && plantingToDelete && (
+          <div 
+            className="fixed inset-0 flex items-center justify-center p-4 z-50"
+            style={{ backgroundColor: 'rgba(0, 0, 0, 0.5)' }}
+            onClick={() => {
+              setShowDeleteConfirm(false)
+              setPlantingToDelete(null)
+            }}
+          >
+            <div 
+              className="bg-white rounded-lg shadow-xl max-w-md w-full p-6"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <h3 className="text-lg font-bold text-gray-900 mb-4">Delete Planting?</h3>
+              <p className="text-gray-600 mb-6">
+                Are you sure you want to delete this planting? This action cannot be undone.
+              </p>
+              <div className="flex gap-3">
+                <button
+                  onClick={() => {
+                    setShowDeleteConfirm(false)
+                    setPlantingToDelete(null)
+                  }}
+                  className="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-800 px-4 py-2 rounded-md font-medium"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={() => {
+                    if (plantingToDelete) {
+                      deleteMutation.mutate(plantingToDelete)
+                    }
+                  }}
+                  disabled={deleteMutation.isPending}
+                  className="flex-1 bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-md font-medium disabled:opacity-50"
+                >
+                  {deleteMutation.isPending ? 'Deleting...' : 'Delete'}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </Layout>
   )

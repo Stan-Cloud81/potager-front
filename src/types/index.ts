@@ -28,6 +28,7 @@ export type Planting = {
   planted_at: string
   expected_harvest: string
   status: "planned" | "planted" | "harvested"
+  quantity: number
 }
 
 export type LoginRequest = {
@@ -53,8 +54,13 @@ export type CreateGardenPlotRequest = Omit<GardenPlot, "id">
 export type CreatePlantingRequest = {
   plant_id: string
   plot_id: string
+  quantity: number
 }
 
 export type UpdatePlantingStatusRequest = {
   status: "planned" | "planted" | "harvested"
+}
+
+export type UpdatePlantingQuantityRequest = {
+  quantity: number
 }
