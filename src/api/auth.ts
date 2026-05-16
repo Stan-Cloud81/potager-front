@@ -14,3 +14,7 @@ export const register = async (data: RegisterRequest) => {
     body: JSON.stringify(data),
   })
 }
+
+export const getMe = async (): Promise<{ email: string, is_admin?: boolean }> => {
+  return apiRequest<{ email: string, is_admin?: boolean }>("/auth/me")
+}

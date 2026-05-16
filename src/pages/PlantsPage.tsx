@@ -1,8 +1,9 @@
 import { useState, FormEvent } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { getPlants, getPlantDetails } from '../api/plants'
+import { getPlants, getPlantDetails, createPlant } from '../api/plants'
 import { getPlots } from '../api/plots'
 import { createPlanting } from '../api/plantings'
+import { getMe } from '../api/auth'
 import { Layout } from '../components/Layout'
 import { PlantImage } from '../components/PlantImage'
 import { MonthIndicator } from '../components/MonthIndicator'
@@ -15,6 +16,7 @@ export const PlantsPage = () => {
   const [selectedPlantForPlot, setSelectedPlantForPlot] = useState<string | null>(null)
   const [selectedPlotId, setSelectedPlotId] = useState('')
   const [quantity, setQuantity] = useState(1)
+  const [showCreatePlant, setShowCreatePlant] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
   const [showFilters, setShowFilters] = useState(false)
   const [page, setPage] = useState(1)
@@ -83,7 +85,14 @@ export const PlantsPage = () => {
     queryFn: () => getPlots(),
   })
 
-  const createMutation = useMutation({
+  const { data: user } = useQuery({
+    queryKey: ['me'],
+    queryFn: getMe,
+  })
+
+  const isAdmin = user?.is_admin || false
+
+  const createPlantingMutation = useMutation({
     mutationFn: createPlanting,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['plantings'] })
@@ -94,10 +103,42 @@ export const PlantsPage = () => {
     },
   })
 
+  const createPlantMutation = useMutation({
+    mutationFn: createPlant,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['plants'] })
+      setShowCreatePlant(false)
+    },
+  })
+
   const handleAddToPlot = (e: FormEvent) => {
     e.preventDefault()
     if (!selectedPlantForPlot || !selectedPlotId) return
-    createMutation.mutate({ plant_id: selectedPlantForPlot, plot_id: selectedPlotId, quantity })
+    createPlantingMutation.mutate({ plant_id: selectedPlantForPlot, plot_id: selectedPlotId, quantity })
+  }
+
+  const handleCreatePlant = (e: FormEvent) => {
+    e.preventDefault()
+    const formData = new FormData(e.target as HTMLFormElement)
+    const data = {
+      name: formData.get('name') as string,
+      type: formData.get('type') as 'vegetable' | 'fruit',
+      variety: formData.get('variety') as string,
+      planting_months: (formData.get('planting_months') as string).split(',').map(Number).filter(Boolean),
+      harvested_months: (formData.get('harvested_months') as string).split(',').map(Number).filter(Boolean),
+      harvest_time_days: parseInt(formData.get('harvest_time_days') as string),
+      watering_frequency: formData.get('watering_frequency') as 'low' | 'medium' | 'high',
+      sunlight_requirement: formData.get('sunlight_requirement') as 'low' | 'partial' | 'full',
+      spacing_between_plants: parseInt(formData.get('spacing_between_plants') as string),
+      spacing_between_rows: parseInt(formData.get('spacing_between_rows') as string),
+      days_to_maturity_text: (formData.get('days_to_maturity_text') as string) || undefined,
+      germination_temperature: (formData.get('germination_temperature') as string) || undefined,
+      growing_method: (formData.get('growing_method') as string) || undefined,
+      hybrid_status: (formData.get('hybrid_status') as string) || undefined,
+      latin_name: (formData.get('latin_name') as string) || undefined,
+      soil_ph: (formData.get('soil_ph') as string) || undefined,
+    }
+    createPlantMutation.mutate(data)
   }
 
   return (
@@ -409,6 +450,24 @@ export const PlantsPage = () => {
         {plants && plants.length > 0 && (
           <>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-6">
+            {isAdmin && (
+              <button
+                onClick={() => setShowCreatePlant(true)}
+                className="bg-white shadow-md rounded-lg overflow-hidden border-2 border-dashed border-green-600 hover:border-green-700 hover:bg-green-50 transition-all flex items-center justify-center min-h-[400px] group relative"
+              >
+                <div className="absolute top-4 right-4 w-8 h-8 bg-yellow-400 rounded-full flex items-center justify-center shadow-md">
+                  <svg className="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 20 20">
+                    <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                  </svg>
+                </div>
+                <div className="text-center">
+                  <svg className="w-16 h-16 mx-auto text-green-600 group-hover:text-green-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                  </svg>
+                  <p className="mt-2 text-lg font-semibold text-green-600 group-hover:text-green-700">Add New Plant</p>
+                </div>
+              </button>
+            )}
             {plants.map((plant) => (
               <div key={plant.id} className="bg-white shadow-md rounded-lg overflow-hidden">
                 <div className="relative">
@@ -646,7 +705,7 @@ export const PlantsPage = () => {
           if (!plant) return null
           
           return (
-            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+            <div className="fixed inset-0 flex items-center justify-center p-4 z-50" style={{ backgroundColor: 'rgba(0, 0, 0, 0.3)' }}>
               <div className="bg-white rounded-lg shadow-xl max-w-md w-full max-h-[90vh] overflow-y-auto">
                 <div className="p-6">
                   <div className="flex justify-between items-center mb-4">
@@ -697,9 +756,9 @@ export const PlantsPage = () => {
                       />
                     </div>
 
-                    {createMutation.isError && (
+                    {createPlantingMutation.isError && (
                       <div className="text-red-600 text-sm">
-                        {createMutation.error.message}
+                        {createPlantingMutation.error.message}
                       </div>
                     )}
                     <div className="flex gap-3">
@@ -717,10 +776,10 @@ export const PlantsPage = () => {
                       </button>
                       <button
                         type="submit"
-                        disabled={createMutation.isPending || !selectedPlotId}
+                        disabled={createPlantingMutation.isPending || !selectedPlotId}
                         className="flex-1 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md font-medium disabled:opacity-50"
                       >
-                        {createMutation.isPending ? 'Adding...' : 'Add Plant'}
+                        {createPlantingMutation.isPending ? 'Adding...' : 'Add Plant'}
                       </button>
                     </div>
                   </form>
@@ -729,6 +788,240 @@ export const PlantsPage = () => {
             </div>
           )
         })()}
+
+        {showCreatePlant && (
+          <div className="fixed inset-0 flex items-center justify-center p-4 z-50" style={{ backgroundColor: 'rgba(0, 0, 0, 0.3)' }}>
+            <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+              <div className="p-6">
+                <div className="flex justify-between items-center mb-4">
+                  <h2 className="text-2xl font-bold text-gray-900">Create New Plant</h2>
+                  <button
+                    onClick={() => setShowCreatePlant(false)}
+                    className="text-gray-400 hover:text-gray-600 text-2xl"
+                  >
+                    ×
+                  </button>
+                </div>
+                <form onSubmit={handleCreatePlant} className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Name *
+                      </label>
+                      <input
+                        type="text"
+                        name="name"
+                        required
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-green-500 focus:border-green-500"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Type *
+                      </label>
+                      <select
+                        name="type"
+                        required
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-green-500 focus:border-green-500"
+                      >
+                        <option value="">Select type...</option>
+                        <option value="vegetable">Vegetable</option>
+                        <option value="fruit">Fruit</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Variety *
+                      </label>
+                      <input
+                        type="text"
+                        name="variety"
+                        required
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-green-500 focus:border-green-500"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Latin Name
+                      </label>
+                      <input
+                        type="text"
+                        name="latin_name"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-green-500 focus:border-green-500"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Planting Months * (comma-separated, e.g., 1,2,3)
+                      </label>
+                      <input
+                        type="text"
+                        name="planting_months"
+                        required
+                        placeholder="e.g., 3,4,5"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-green-500 focus:border-green-500"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Harvested Months * (comma-separated)
+                      </label>
+                      <input
+                        type="text"
+                        name="harvested_months"
+                        required
+                        placeholder="e.g., 7,8,9"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-green-500 focus:border-green-500"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Harvest Time (days) *
+                      </label>
+                      <input
+                        type="number"
+                        name="harvest_time_days"
+                        required
+                        min="1"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-green-500 focus:border-green-500"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Days to Maturity Text
+                      </label>
+                      <input
+                        type="text"
+                        name="days_to_maturity_text"
+                        placeholder="e.g., 60-80 days"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-green-500 focus:border-green-500"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Watering Frequency *
+                      </label>
+                      <select
+                        name="watering_frequency"
+                        required
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-green-500 focus:border-green-500"
+                      >
+                        <option value="">Select frequency...</option>
+                        <option value="low">Low</option>
+                        <option value="medium">Medium</option>
+                        <option value="high">High</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Sunlight Requirement *
+                      </label>
+                      <select
+                        name="sunlight_requirement"
+                        required
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-green-500 focus:border-green-500"
+                      >
+                        <option value="">Select requirement...</option>
+                        <option value="low">Low</option>
+                        <option value="partial">Partial</option>
+                        <option value="full">Full</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Growing Method
+                      </label>
+                      <input
+                        type="text"
+                        name="growing_method"
+                        placeholder="e.g., direct seed, transplant"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-green-500 focus:border-green-500"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Germination Temperature
+                      </label>
+                      <input
+                        type="text"
+                        name="germination_temperature"
+                        placeholder="e.g., 15-25°C"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-green-500 focus:border-green-500"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Soil pH
+                      </label>
+                      <input
+                        type="text"
+                        name="soil_ph"
+                        placeholder="e.g., 6.0-7.0"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-green-500 focus:border-green-500"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Hybrid Status
+                      </label>
+                      <input
+                        type="text"
+                        name="hybrid_status"
+                        placeholder="e.g., F1 hybrid, heirloom"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-green-500 focus:border-green-500"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Spacing Between Plants (cm) *
+                      </label>
+                      <input
+                        type="number"
+                        name="spacing_between_plants"
+                        required
+                        min="1"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-green-500 focus:border-green-500"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Spacing Between Rows (cm) *
+                      </label>
+                      <input
+                        type="number"
+                        name="spacing_between_rows"
+                        required
+                        min="1"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-green-500 focus:border-green-500"
+                      />
+                    </div>
+                  </div>
+                  {createPlantMutation.isError && (
+                    <div className="text-red-600 text-sm">
+                      {createPlantMutation.error.message}
+                    </div>
+                  )}
+                  <div className="flex gap-3 pt-4">
+                    <button
+                      type="button"
+                      onClick={() => setShowCreatePlant(false)}
+                      className="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-800 px-4 py-2 rounded-md font-medium"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="submit"
+                      disabled={createPlantMutation.isPending}
+                      className="flex-1 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md font-medium disabled:opacity-50"
+                    >
+                      {createPlantMutation.isPending ? 'Creating...' : 'Create Plant'}
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </Layout>
   )

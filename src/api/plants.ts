@@ -5,8 +5,8 @@ export const getPlants = async (filters?: {
   search?: string
   type?: string
   variety?: string
-  planting_months?: number
-  harvested_months?: number
+  planting_months?: string
+  harvested_months?: string
   watering_frequency?: string
   sunlight_requirement?: string
   spacing_between_plants?: string
@@ -18,8 +18,8 @@ export const getPlants = async (filters?: {
   if (filters?.search) params.append("search", filters.search)
   if (filters?.type) params.append("type", filters.type)
   if (filters?.variety) params.append("variety", filters.variety)
-  if (filters?.planting_months) params.append("planting_months", filters.planting_months.toString())
-  if (filters?.harvested_months) params.append("harvested_months", filters.harvested_months.toString())
+  if (filters?.planting_months) params.append("planting_months", filters.planting_months)
+  if (filters?.harvested_months) params.append("harvested_months", filters.harvested_months)
   if (filters?.watering_frequency) params.append("watering_frequency", filters.watering_frequency)
   if (filters?.sunlight_requirement) params.append("sunlight_requirement", filters.sunlight_requirement)
   if (filters?.spacing_between_plants) params.append("spacing_between_plants", filters.spacing_between_plants)
