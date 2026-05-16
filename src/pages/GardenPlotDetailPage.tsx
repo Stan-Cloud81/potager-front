@@ -66,6 +66,12 @@ export const GardenPlotDetailPage = () => {
     return null
   }
 
+  const getPreviousStatus = (currentStatus: string): 'planned' | 'planted' | null => {
+    if (currentStatus === 'planted') return 'planned'
+    if (currentStatus === 'harvested') return 'planted'
+    return null
+  }
+
   if (plotLoading) {
     return (
       <Layout>
@@ -117,18 +123,14 @@ export const GardenPlotDetailPage = () => {
           {plotPlantings.map((planting) => {
             const plant = getPlantInfo(planting.plant_id)
             const nextStatus = getNextStatus(planting.status)
+            const previousStatus = getPreviousStatus(planting.status)
             
             if (!plant) return null
 
             return (
               <div
                 key={planting.id}
-                className="bg-white shadow-lg rounded-xl overflow-hidden border border-gray-200 hover:shadow-xl transition-shadow cursor-pointer"
-                onClick={() => {
-                  if (nextStatus) {
-                    updateStatusMutation.mutate({ id: planting.id, status: nextStatus })
-                  }
-                }}
+                className="bg-white shadow-lg rounded-xl overflow-hidden border border-gray-200 hover:shadow-xl transition-shadow"
               >
                 <PlantImage 
                   plantId={plant.id}
@@ -191,11 +193,30 @@ export const GardenPlotDetailPage = () => {
                     </div>
                   </div>
 
-                  {nextStatus && (
-                    <div className="mt-4 text-center text-xs text-gray-500">
-                      Click to mark as {nextStatus}
-                    </div>
-                  )}
+                  <div className="mt-4 flex gap-2">
+                    {previousStatus && (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          updateStatusMutation.mutate({ id: planting.id, status: previousStatus })
+                        }}
+                        className="w-24 bg-gray-200 hover:bg-gray-300 text-gray-800 px-3 py-2 rounded-md text-sm font-medium truncate"
+                      >
+                        ← {previousStatus}
+                      </button>
+                    )}
+                    {nextStatus && (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          updateStatusMutation.mutate({ id: planting.id, status: nextStatus })
+                        }}
+                        className="flex-1 bg-green-600 hover:bg-green-700 text-white px-3 py-2 rounded-md text-sm font-medium truncate"
+                      >
+                        {nextStatus} →
+                      </button>
+                    )}
+                  </div>
                 </div>
               </div>
             )
